@@ -59,7 +59,7 @@
 ### 方式一：脚本安装（推荐）
 
 ```powershell
-git clone https://github.com/<your-name>/dsh-codex-bridge.git
+git clone https://github.com/ztg-pty/dsh-codex-bridge.git
 cd dsh-codex-bridge
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 ```
