@@ -1,0 +1,15 @@
+{
+  "title": "Codex 会话桥接",
+  "description": "打通 Codex 会话与 DeepSeek Harness 的数据互转，支持双向导入导出。",
+  "import": "导入 CodeX 会话",
+  "export": "导出至 Codex",
+  "importScanning": "正在扫描本机 Codex 会话目录…",
+  "importPick": "选择要导入的会话",
+  "importDone": "导入完成，可直接在会话列表中打开继续对话",
+  "exportPick": "选择要导出的会话（不会自动全选）",
+  "exportDone": "导出完成",
+  "backupLocation": "旧版 JSONL 备份位置",
+  "copyManual": "请手动将新版 JSONL 复制到 Codex 原目录",
+  "logs": "操作日志",
+  "webModeHint": "当前为 Web 模式，无法访问本机目录，将使用上传/下载方式"
+}

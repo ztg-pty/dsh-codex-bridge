@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- 两个对话气泡 + 双向箭头，表示 Codex ↔ DSH 双向同步 -->
+  <rect x="4" y="10" width="26" height="20" rx="4" fill="#4a9eff" opacity="0.9"/>
+  <path d="M10 30 L10 36 L17 30 Z" fill="#4a9eff" opacity="0.9"/>
+  <rect x="34" y="34" width="26" height="20" rx="4" fill="#00c48c" opacity="0.9"/>
+  <path d="M54 54 L54 60 L47 54 Z" fill="#00c48c" opacity="0.9"/>
+  <path d="M32 22 L32 32" stroke="#888" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M28 28 L32 32 L36 28" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M32 42 L32 32" stroke="#888" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M28 36 L32 32 L36 36" stroke="#888" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

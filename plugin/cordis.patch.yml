@@ -1,0 +1,14 @@
+# 服务端注册：把插件插入 DSH profile 的配置树。
+# 由 dsh 的 profile 加载器在 cordis.patch.yml 层叠加后生效。
+- insert:
+    - id: codex-bridge
+      name: dsh-codex-bridge
+      config:
+        # 留空 = 自动探测 %USERPROFILE%\.codex
+        codexHome: ""
+        # 留空 = <dsh-home>/codex-bridge/export
+        outputDir: ""
+        # 导出瞬间自动备份 Codex 目录中的旧 JSONL
+        backupBeforeExport: true
+        # 单文件上限 256MB，超限跳过并提示
+        maxSessionBytes: 268435456

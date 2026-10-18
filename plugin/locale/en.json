@@ -1,0 +1,15 @@
+{
+  "title": "Codex Session Bridge",
+  "description": "Two-way session import/export between Codex and DeepSeek Harness.",
+  "import": "Import Codex Sessions",
+  "export": "Export to Codex",
+  "importScanning": "Scanning local Codex session directory…",
+  "importPick": "Select sessions to import",
+  "importDone": "Import complete. Open the session to continue.",
+  "exportPick": "Select sessions to export (nothing pre-selected)",
+  "exportDone": "Export complete",
+  "backupLocation": "Old JSONL backup location",
+  "copyManual": "Manually copy the new JSONL files into the Codex directory",
+  "logs": "Operation log",
+  "webModeHint": "Web mode: local directories are inaccessible; upload/download will be used."
+}

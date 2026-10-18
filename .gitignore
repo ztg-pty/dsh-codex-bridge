@@ -1,0 +1,17 @@
+# 依赖与构建产物
+node_modules/
+*.tsbuildinfo
+
+# 日志与临时文件
+*.log
+*.tmp
+*.tmp-*
+.DS_Store
+Thumbs.db
+
+# 本地环境
+.env
+.env.local
+
+# 用户数据备份（不提交）
+*-backup-*/
