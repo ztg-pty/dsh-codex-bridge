@@ -5,7 +5,39 @@
 
 ---
 
-## ✅ 最终验收通过（2026-10-18 10:34）
+## ✅ WorkBuddy 导入验证通过（2026-10-18 13:05）
+
+用户截图确认：WorkBuddy AI 的任务列表中出现了导入的会话「设计模块化城市地图系统」，
+内容（模型回复、代码块、项目进度总结）完整渲染，可直接继续对话。
+
+### WorkBuddy 存储机制（实测）
+
+| 位置 | 作用 |
+|---|---|
+| `~/.workbuddy-ai/workbuddy.db` → `sessions` 表 | 会话元数据（必填 `cwd` / `user_id` / `created_at` / `updated_at`） |
+| `~/.workbuddy-ai/workbuddy.db` → `workspaces` 表 | 工作区列表（`path` 为 Windows 反斜杠形式） |
+| `~/.workbuddy-ai/projects/<cwd编码>/<sessionId>.jsonl` | 会话内容 |
+
+### 验证过程中踩到的坑
+
+| # | 问题 | 现象 | 修复 |
+|---|---|---|---|
+| 1 | 写入顺序错误 | 先写 jsonl 再写数据库 → **项目目录被 WorkBuddy 当成垃圾清理** | 必须先写 `sessions`/`workspaces` 表，再写 jsonl 文件 |
+| 2 | 目录名编码 | `D:/x` 若编码成 `D-x`（大写盘符）与现有规则不符 | 盘符小写：`d-x` |
+| 3 | userData 路径 | `%APPDATA%\WorkBuddy` 几乎是空的 | 实际在 `~/.workbuddy-ai`（从进程命令行 `--user-data-dir` 才查到） |
+
+### 转换结果
+
+验证会话「设计模块化城市地图系统」：DSH 549 个事件 → WorkBuddy 361 条记录
+
+```
+session-meta 1 | message 32 | reasoning 23 | function_call 152 | function_call_result 152 | ai-title 1
+parentId 链完整 ✅
+```
+
+---
+
+## ✅ DSH 导入验证通过（2026-10-18 10:34）
 
 截图确认的完整效果：
 
