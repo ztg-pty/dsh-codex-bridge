@@ -48,12 +48,35 @@ export function workbuddyAvailable(): boolean {
   }
 }
 
-/** 读取 WorkBuddy 的 user_id（从现有会话取，导入的会话需要归属同一用户） */
+/**
+ * 读取 WorkBuddy 的 user_id（导入的会话需要归属同一登录用户）。
+ *
+ * 三级兜底（保证换机器也能用）：
+ *   1. 从现有 sessions 行取（最可靠）
+ *   2. 从 `user-<uuid>-personal` 目录名提取（实测该目录名含 user_id）
+ *   3. 都没有 → 明确报错并给出操作指引
+ */
 function readUserId(db: any): string {
-  const row = db.prepare('SELECT user_id FROM sessions LIMIT 1').get();
-  if (row?.user_id) return String(row.user_id);
+  // 1. 现有会话
+  try {
+    const row = db.prepare('SELECT user_id FROM sessions WHERE user_id IS NOT NULL LIMIT 1').get();
+    if (row?.user_id) return String(row.user_id);
+  } catch { /* 表结构异常，走下一级 */ }
+
+  // 2. 从 user-<uuid>-personal 目录名提取
+  try {
+    const home = defaultWorkbuddyHome();
+    const entries = fs.readdirSync(home, { withFileTypes: true });
+    for (const e of entries) {
+      if (!e.isDirectory()) continue;
+      const m = e.name.match(/^user-([0-9a-fA-F-]{36})-personal$/);
+      if (m) return m[1];
+    }
+  } catch { /* 忽略 */ }
+
+  // 3. 明确失败
   throw new BridgeError('UNSUPPORTED_ENV', undefined, {
-    reason: 'WorkBuddy 中没有任何会话，无法确定用户 ID。请先在 WorkBuddy 里创建并打开一个会话，再重试。',
+    reason: '无法确定 WorkBuddy 用户 ID。请先在 WorkBuddy 里创建并打开一个会话（或登录账号），再重试。',
   });
 }
 
