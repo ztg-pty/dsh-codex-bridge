@@ -22,4 +22,15 @@ export default defineConfig([
     // 客户端：必须自包含，react 也要打进去（DSH 前端不提供裸模块解析）
     noExternal: [/^react/, /^react-dom/],
   },
+  {
+    // MCP Server 的 stdio 入口（独立 CLI 用）
+    entry: { 'mcp-stdio': 'src/mcp/stdio-entry.ts' },
+    format: ['esm'],
+    platform: 'node',
+    dts: false,
+    outDir: 'lib',
+    outExtensions: () => ({ js: '.js' }),
+    // 独立进程运行，需要自包含（不能依赖宿主提供模块）
+    noExternal: [/.*/],
+  },
 ]);

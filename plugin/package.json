@@ -1,13 +1,17 @@
 {
   "name": "dsh-codex-bridge",
-  "displayName": "Codex 会话桥接",
-  "description": "打通 Codex 会话与 DeepSeek Harness 的数据互转，支持双向导入导出（含子代理会话、工具调用与元数据）。",
-  "version": "0.1.0",
-  "author": "admin",
+  "displayName": "会话桥接",
+  "description": "打通 Codex / DeepSeek Harness / Zcode / Claude Code / WorkBuddy 五端会话，支持双向导入导出与 MCP 通用接入。",
+  "version": "0.2.0",
+  "author": "ztg-pty",
   "keywords": [
     "dsh-plugin",
     "deepseek-harness",
     "codex",
+    "zcode",
+    "claude-code",
+    "workbuddy",
+    "mcp",
     "session-import-export",
     "migration"
   ],
@@ -18,18 +22,23 @@
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "bin": {
+    "dsh-codex-bridge-mcp": "bin/mcp-stdio.js"
+  },
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
       "default": "./lib/index.js"
     },
     "./client": "./lib/client.js",
+    "./mcp": "./lib/mcp-stdio.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json",
     "./locale/*.json": "./locale/*.json"
   },
   "files": [
     "lib",
+    "bin",
     "cordis.patch.yml",
     "locale",
     "assets",

@@ -1,8 +1,8 @@
 # 多端会话互通 + MCP 通用接入 —— 技术方案
 
-> 版本：v1 草案
+> 版本：v2（全部阶段已实现）
 > 日期：2026-10-21
-> 状态：**Phase 0-2 已实现**（UIR 骨架 / 客户端探测 / Token 预算与摘要引擎），Phase 1 适配器与 Phase 3 MCP 待实施
+> 状态：**Phase 0-3 全部完成**（UIR / 五端适配器 / Token 预算与摘要 / MCP Server / UI）
 
 ---
 
@@ -13,37 +13,64 @@
 | **Phase 0** | UIR 类型 + 工具函数 | ✅ 完成 |
 | **可移植性** | 客户端探测、user_id 三级兜底、平台声明 | ✅ 完成 |
 | **Phase 2** | Token 估算 + 四级压缩 + 技术索引 | ✅ 完成（真实 130 万 token 会话验证） |
-| Phase 1 | Zcode / Claude Code / WorkBuddy reader 适配器 | ⬜ 待实施 |
-| Phase 3 | MCP Server | ⬜ 待实施 |
-| Phase 4 | 全端 UI + 发布 | ⬜ 待实施 |
+| **Phase 1** | 五端适配器（DSH/Codex/Zcode/Claude Code/WorkBuddy） | ✅ 完成（20 条转换路径全通） |
+| **Phase 3** | MCP Server（stdio + HTTP，6 个工具） | ✅ 完成 |
+| **Phase 4** | UI（跨端转换 + 上下文预览）+ 发布 v0.2.0 | ✅ 完成 |
 
 ### 已完成模块
 
 ```
 plugin/src/
 ├── uir/
-│   ├── types.ts        # UIR 类型 + 适配器接口 + 能力声明
-│   └── helpers.ts      # 价值分级、特征检测、统计、校验
+│   ├── types.ts              # UIR 类型 + 适配器接口 + 能力声明
+│   └── helpers.ts            # 价值分级、特征检测、统计、校验
+├── adapters/
+│   ├── registry.ts           # 注册表 + 跨端转换 + 损失提示
+│   ├── dsh/adapter.ts        # DSH v4 事件流
+│   ├── codex/adapter.ts      # rollout + 索引
+│   ├── zcode/adapter.ts      # SQLite 三表
+│   ├── claude-code/adapter.ts# JSONL + parentUuid
+│   └── workbuddy/adapter.ts  # SQLite + JSONL
 ├── budget/
-│   ├── tokens.ts       # Token 估算（启发式 + 可注入精确分词器）
-│   └── summarize.ts    # 四级压缩流水线 + 技术索引
+│   ├── tokens.ts             # Token 估算
+│   └── summarize.ts          # 四级压缩 + 技术索引
+├── mcp/
+│   ├── protocol.ts           # JSON-RPC 2.0 + MCP 方法
+│   ├── tools.ts              # 6 个工具
+│   └── stdio-entry.ts        # stdio 入口
+├── client/
+│   ├── SettingsPage.tsx      # 主页（客户端状态 + 三入口）
+│   ├── TransferDialog.tsx    # 跨端转换 + 上下文预览
+│   ├── ImportDialog.tsx      # Codex → DSH
+│   └── ExportDialog.tsx      # DSH → Codex / WorkBuddy
 └── host/
-    └── clients.ts      # 五端客户端探测 + 平台能力声明
+    ├── clients.ts            # 五端探测 + 平台声明
+    └── routes.ts             # 含 /clients /sessions/all /transfer /context/preview /mcp
 ```
 
-### 真实数据验证结果（130 万 token 会话 → 200k 预算）
+### 真实验证结果
 
-| 指标 | 结果 |
-|---|---|
-| 预算利用率 | **99.9%**（182,712 / 184,000） |
-| 报错保留 | 50%（原为 0%——修正了报错正则） |
-| 命令保留 | 45% |
-| 文件保留 | 21%（技术索引列出全部 761 个可识别文件名） |
-| 压缩级别 | L2（结构化 + 技术索引） |
-| 技术索引条目 | 814 |
+**五端互通**（20 条路径全部可达）：
 
-> 注：`files: 21%` 的分母来自验证脚本的宽松正则（1390 个，含非文件实体）；
-> 实际技术索引已列出 `extractPaths` 能识别的全部 761 个文件名。
+```
+claude-code    →   -  L4 L2 L3 L4
+zcode          → L2   -  L1 L2 L3
+dsh            → L2 L3   -  L2 L3
+codex          → L2 L3 L1   -  L3
+workbuddy      → L2 L3 L1 L2   -
+```
+
+**跨端转换实测**：Claude Code → Zcode 成功（3 轮 → 3 轮，自动备份数据库）
+
+**MCP Server 实测**：
+- 6 个工具全部注册成功
+- `initialize` / `tools/list` / `tools/call` / `ping` 协议正确
+- `get_context` 返回带元信息头的压缩上下文
+
+**上下文压缩实测**（130 万 token → 200k 预算）：
+- 预算利用率 99.9%
+- 报错保留 50%、命令保留 45%
+- 技术索引 814 条
 
 ---
 

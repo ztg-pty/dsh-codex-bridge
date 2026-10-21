@@ -14,6 +14,14 @@ import { readRecentLogs } from './oplog.js';
 import { BridgeError, describeError } from '../shared/errors.js';
 import { defaultCodexSessionsDir, defaultDshSessionsRoot, listWorkspaces, listRolloutFiles } from './paths.js';
 import { registerToCodex } from './codex-index.js';
+import { probeAllClients, platformSupport } from './clients.js';
+import {
+  capabilityMatrix, availableAdapters, listAllSessions,
+  readSession, writeSession, transferSession, describeLoss,
+} from '../adapters/registry.js';
+import { summarizeSession, formatStats } from '../budget/summarize.js';
+import { effectiveBudget } from '../budget/tokens.js';
+import { createBridgeMcpServer } from '../mcp/tools.js';
 
 // ★ 官方命名空间（实测 dsh-workbuddy-connect 用 /plugins/<包名>/...）
 const ROUTE_BASE = '/plugins/dsh-codex-bridge';
@@ -233,6 +241,136 @@ export function mountRoutes(router: {
       const limit = Number(url.searchParams.get('limit') ?? 100) || 100;
       const logs = await readRecentLogs(Math.min(limit, 500));
       json(res, 200, { ok: true, logs });
+    } catch (e) { fail(res, e); }
+  });
+
+  // ══════════════════ 跨端互通（UIR） ══════════════════
+
+  // GET /codex-bridge/clients —— 五端客户端探测 + 能力矩阵 + 平台说明
+  router.get(`${ROUTE_BASE}/clients`, async (req, res) => {
+    if (!guard(req, res)) return;
+    try {
+      json(res, 200, {
+        ok: true,
+        clients: probeAllClients(),
+        capabilities: capabilityMatrix(),
+        uirAdapters: availableAdapters(),
+        platform: platformSupport(),
+      });
+    } catch (e) { fail(res, e); }
+  });
+
+  // GET /codex-bridge/sessions/all —— 列出所有可用客户端的会话
+  router.get(`${ROUTE_BASE}/sessions/all`, async (req, res) => {
+    if (!guard(req, res)) return;
+    try {
+      const url = new URL(req.url ?? '/', 'http://127.0.0.1');
+      const clientsParam = url.searchParams.get('clients');
+      const clients = clientsParam
+        ? clientsParam.split(',').map((s) => s.trim()).filter(Boolean) as any[]
+        : undefined;
+      const limit = Number(url.searchParams.get('limit') ?? 50) || 50;
+      const r = await listAllSessions({ clients, limitPerClient: Math.min(limit, 200) });
+      json(res, 200, { ok: true, sessions: r.sessions, errors: r.errors });
+    } catch (e) { fail(res, e); }
+  });
+
+  // GET /codex-bridge/loss?from=&to= —— 转换损失提示
+  router.get(`${ROUTE_BASE}/loss`, async (req, res) => {
+    if (!guard(req, res)) return;
+    try {
+      const url = new URL(req.url ?? '/', 'http://127.0.0.1');
+      const from = url.searchParams.get('from') as any;
+      const to = url.searchParams.get('to') as any;
+      if (!from || !to) throw new BridgeError('NO_SELECTION', '缺少 from 或 to 参数');
+      json(res, 200, { ok: true, losses: describeLoss(from, to) });
+    } catch (e) { fail(res, e); }
+  });
+
+  // POST /codex-bridge/transfer —— 跨端转换（read A → UIR → write B）
+  router.post(`${ROUTE_BASE}/transfer`, async (req, res) => {
+    if (!guard(req, res)) return;
+    try {
+      const body = JSON.parse(await readBody(req));
+      const from = body.from as any;
+      const fromId = String(body.fromId ?? '');
+      const to = body.to as any;
+      if (!from || !fromId || !to) {
+        throw new BridgeError('NO_SELECTION', '缺少 from / fromId / to 参数');
+      }
+      if (from === to) {
+        throw new BridgeError('CONVERT_FAILED', undefined, { reason: '源端与目标端相同，无需转换' });
+      }
+      const r = await transferSession({
+        from, fromId, to,
+        title: typeof body.title === 'string' ? body.title : undefined,
+        cwd: typeof body.cwd === 'string' ? body.cwd : undefined,
+      });
+      json(res, 200, { ...r, ok: true });
+    } catch (e) { fail(res, e); }
+  });
+
+  // POST /codex-bridge/context/preview —— 生成压缩上下文预览
+  router.post(`${ROUTE_BASE}/context/preview`, async (req, res) => {
+    if (!guard(req, res)) return;
+    try {
+      const body = JSON.parse(await readBody(req));
+      const client = body.client as any;
+      const sessionId = String(body.sessionId ?? '');
+      if (!client || !sessionId) {
+        throw new BridgeError('NO_SELECTION', '缺少 client / sessionId 参数');
+      }
+      const budget = Number(body.budget ?? 200_000);
+      const read = await readSession(client, sessionId);
+      const sum = summarizeSession(read.session, {
+        budget,
+        fidelity: body.fidelity,
+        focus: Array.isArray(body.focus) ? body.focus.map(String) : undefined,
+      });
+      json(res, 200, {
+        ok: true,
+        session: {
+          client,
+          id: sessionId,
+          title: read.session.title,
+          cwd: read.session.cwd,
+          turns: read.session.turns.length,
+        },
+        context: sum.context,
+        outline: sum.outline,
+        stats: sum.stats,
+        statsText: formatStats(sum.stats),
+        budget: { requested: budget, effective: effectiveBudget(budget) },
+      });
+    } catch (e) { fail(res, e); }
+  });
+
+  // ══════════════════ MCP Server（HTTP 传输） ══════════════════
+  // 让任意支持 MCP 的客户端通过 HTTP 接入本插件。
+  // 注意：这是简化版 HTTP 传输（非 SSE 流式），适用于一次性请求-响应。
+  const mcpServer = createBridgeMcpServer();
+
+  // POST /codex-bridge/mcp —— JSON-RPC over HTTP
+  router.post(`${ROUTE_BASE}/mcp`, async (req, res) => {
+    if (!guard(req, res)) return;
+    try {
+      const raw = await readBody(req);
+      const out = await mcpServer.handleLine(raw);
+      if (!out) {
+        // 通知类消息无响应
+        json(res, 200, { ok: true, notification: true });
+        return;
+      }
+      res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+      res.end(out);
+    } catch (e) { fail(res, e); }
+  });
+
+  // GET /codex-bridge/mcp/tools —— 便于调试：列出工具定义
+  router.get(`${ROUTE_BASE}/mcp/tools`, async (req, res) => {
+    if (!guard(req, res)) return;
+    try {
+      json(res, 200, { ok: true, tools: mcpServer.listTools() });
     } catch (e) { fail(res, e); }
   });
 }

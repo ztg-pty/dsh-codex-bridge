@@ -11,14 +11,16 @@ window.__ModuleLoader__.load({
 let react = require("react");
 		let react_jsx_runtime = require("react/jsx-runtime");
 
+const jsx5 = react_jsx_runtime["jsx"]; const jsxs5 = react_jsx_runtime["jsxs"];
 const jsx4 = react_jsx_runtime["jsx"]; const jsxs4 = react_jsx_runtime["jsxs"];
+const useCallback4 = react["useCallback"]; const useEffect4 = react["useEffect"]; const useState4 = react["useState"];
 const jsx3 = react_jsx_runtime["jsx"]; const jsxs3 = react_jsx_runtime["jsxs"];
-const useCallback3 = react["useCallback"]; const useEffect3 = react["useEffect"]; const useState3 = react["useState"];
+const useCallback3 = react["useCallback"]; const useEffect3 = react["useEffect"]; const useMemo3 = react["useMemo"]; const useState3 = react["useState"];
 const jsx2 = react_jsx_runtime["jsx"]; const jsxs2 = react_jsx_runtime["jsxs"];
 const useCallback2 = react["useCallback"]; const useEffect2 = react["useEffect"]; const useMemo2 = react["useMemo"]; const useState2 = react["useState"];
 const jsx = react_jsx_runtime["jsx"]; const jsxs = react_jsx_runtime["jsxs"];
 const useCallback = react["useCallback"]; const useEffect = react["useEffect"]; const useMemo = react["useMemo"]; const useState = react["useState"];
-const useEffect4 = react["useEffect"]; const useState4 = react["useState"];
+const useCallback5 = react["useCallback"]; const useEffect5 = react["useEffect"]; const useState5 = react["useState"];
 // src/client.ts
 
 // src/client/SettingsPage.tsx
@@ -666,6 +668,336 @@ function ExportDialog({ apiBase, onBack }) {
   ] });
 }
 
+// src/client/TransferDialog.tsx
+
+
+function TransferDialog({ apiBase, onBack }) {
+  const [phase, setPhase] = useState3("loading");
+  const [error, setError] = useState3(null);
+  const [clients, setClients] = useState3([]);
+  const [caps, setCaps] = useState3([]);
+  const [platformNote, setPlatformNote] = useState3("");
+  const [source, setSource] = useState3("");
+  const [target, setTarget] = useState3("");
+  const [sessions, setSessions] = useState3([]);
+  const [selected, setSelected] = useState3("");
+  const [keyword, setKeyword] = useState3("");
+  const [losses, setLosses] = useState3([]);
+  const [result, setResult] = useState3(null);
+  const [preview, setPreview] = useState3(null);
+  const [budget, setBudget] = useState3(2e5);
+  const loadClients = useCallback3(async () => {
+    setPhase("loading");
+    setError(null);
+    try {
+      const r = await fetch(`${apiBase}/clients`);
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.message ?? "\u52A0\u8F7D\u5931\u8D25");
+      setClients(d.clients ?? []);
+      setCaps(d.capabilities ?? []);
+      setPlatformNote(d.platform?.note ?? "");
+      const firstReadable = (d.clients ?? []).find((c) => c.canRead && c.detected);
+      if (firstReadable) setSource(firstReadable.kind);
+      setPhase("pick");
+    } catch (e) {
+      setError(String(e?.message ?? e));
+      setPhase("error");
+    }
+  }, [apiBase]);
+  useEffect3(() => {
+    void loadClients();
+  }, [loadClients]);
+  useEffect3(() => {
+    if (!source) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`${apiBase}/sessions/all?clients=${encodeURIComponent(source)}&limit=200`);
+        const d = await r.json();
+        if (cancelled) return;
+        if (!d.ok) throw new Error(d.message ?? "\u52A0\u8F7D\u4F1A\u8BDD\u5931\u8D25");
+        setSessions((d.sessions ?? []).filter((s) => s.client === source));
+        setSelected("");
+      } catch (e) {
+        if (!cancelled) setError(String(e?.message ?? e));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBase, source]);
+  useEffect3(() => {
+    if (!source || !target) {
+      setLosses([]);
+      return;
+    }
+    (async () => {
+      try {
+        const r = await fetch(`${apiBase}/loss?from=${encodeURIComponent(source)}&to=${encodeURIComponent(target)}`);
+        const d = await r.json();
+        if (d.ok) setLosses(d.losses ?? []);
+      } catch {
+        setLosses([]);
+      }
+    })();
+  }, [apiBase, source, target]);
+  const visible = useMemo3(
+    () => sessions.filter((s) => !keyword || s.title.toLowerCase().includes(keyword.toLowerCase()) || s.cwd.toLowerCase().includes(keyword.toLowerCase())).sort((a, b) => b.updatedAt - a.updatedAt),
+    [sessions, keyword]
+  );
+  const doTransfer = async () => {
+    if (!selected || !target) return;
+    setPhase("running");
+    setError(null);
+    try {
+      const r = await fetch(`${apiBase}/transfer`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ from: source, fromId: selected, to: target })
+      });
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.message ?? "\u8F6C\u6362\u5931\u8D25");
+      setResult(d);
+      setPhase("done");
+    } catch (e) {
+      setError(String(e?.message ?? e));
+      setPhase("error");
+    }
+  };
+  const doPreview = async () => {
+    if (!selected) return;
+    setPhase("running");
+    setError(null);
+    try {
+      const r = await fetch(`${apiBase}/context/preview`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ client: source, sessionId: selected, budget })
+      });
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.message ?? "\u9884\u89C8\u5931\u8D25");
+      setPreview(d);
+      setPhase("preview");
+    } catch (e) {
+      setError(String(e?.message ?? e));
+      setPhase("error");
+    }
+  };
+  if (phase === "loading") {
+    return /* @__PURE__ */ jsxs3("div", { className: "dialog", children: [
+      /* @__PURE__ */ jsx3("h3", { children: "\u8DE8\u7AEF\u8F6C\u6362" }),
+      /* @__PURE__ */ jsx3("p", { children: "\u6B63\u5728\u63A2\u6D4B\u5BA2\u6237\u7AEF\u2026" }),
+      /* @__PURE__ */ jsx3("div", { className: "spinner" })
+    ] });
+  }
+  if (phase === "running") {
+    return /* @__PURE__ */ jsxs3("div", { className: "dialog", children: [
+      /* @__PURE__ */ jsx3("h3", { children: "\u5904\u7406\u4E2D\u2026" }),
+      /* @__PURE__ */ jsx3("p", { children: "\u6B63\u5728\u8BFB\u53D6\u5E76\u8F6C\u6362\u4F1A\u8BDD\uFF0C\u8BF7\u7A0D\u5019\u3002" }),
+      /* @__PURE__ */ jsx3("div", { className: "spinner" })
+    ] });
+  }
+  if (phase === "error") {
+    return /* @__PURE__ */ jsxs3("div", { className: "dialog", children: [
+      /* @__PURE__ */ jsx3("h3", { children: "\u64CD\u4F5C\u5931\u8D25" }),
+      /* @__PURE__ */ jsx3("div", { className: "alert error", children: error }),
+      /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
+        /* @__PURE__ */ jsx3("div", {}),
+        /* @__PURE__ */ jsxs3("div", { children: [
+          /* @__PURE__ */ jsx3("button", { onClick: onBack, children: "\u8FD4\u56DE" }),
+          /* @__PURE__ */ jsx3("button", { className: "primary", onClick: loadClients, children: "\u91CD\u8BD5" })
+        ] })
+      ] })
+    ] });
+  }
+  if (phase === "done" && result) {
+    return /* @__PURE__ */ jsxs3("div", { className: "dialog wide", children: [
+      /* @__PURE__ */ jsx3("h3", { children: "\u8F6C\u6362\u5B8C\u6210" }),
+      /* @__PURE__ */ jsxs3("div", { className: "alert success", children: [
+        "\u2705 \u5DF2\u4ECE ",
+        /* @__PURE__ */ jsx3("b", { children: result.source?.client }),
+        " \u8F6C\u6362\u5230 ",
+        /* @__PURE__ */ jsx3("b", { children: result.target?.client })
+      ] }),
+      /* @__PURE__ */ jsxs3("table", { className: "sessions", children: [
+        /* @__PURE__ */ jsx3("thead", { children: /* @__PURE__ */ jsxs3("tr", { children: [
+          /* @__PURE__ */ jsx3("th", { children: "\u9879\u76EE" }),
+          /* @__PURE__ */ jsx3("th", { children: "\u503C" })
+        ] }) }),
+        /* @__PURE__ */ jsxs3("tbody", { children: [
+          /* @__PURE__ */ jsxs3("tr", { children: [
+            /* @__PURE__ */ jsx3("td", { children: "\u6E90\u4F1A\u8BDD" }),
+            /* @__PURE__ */ jsxs3("td", { children: [
+              result.source?.title,
+              "\uFF08",
+              result.source?.turns,
+              " \u8F6E\uFF09"
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs3("tr", { children: [
+            /* @__PURE__ */ jsx3("td", { children: "\u76EE\u6807 ID" }),
+            /* @__PURE__ */ jsx3("td", { className: "path", children: result.target?.id })
+          ] }),
+          /* @__PURE__ */ jsxs3("tr", { children: [
+            /* @__PURE__ */ jsx3("td", { children: "\u5199\u5165\u4F4D\u7F6E" }),
+            /* @__PURE__ */ jsx3("td", { className: "path", children: result.target?.location })
+          ] }),
+          /* @__PURE__ */ jsxs3("tr", { children: [
+            /* @__PURE__ */ jsx3("td", { children: "\u8BB0\u5F55\u6570" }),
+            /* @__PURE__ */ jsx3("td", { children: result.target?.records })
+          ] })
+        ] })
+      ] }),
+      result.warnings?.length > 0 && /* @__PURE__ */ jsxs3("div", { className: "alert info", children: [
+        /* @__PURE__ */ jsx3("p", { children: /* @__PURE__ */ jsx3("b", { children: "\u63D0\u793A\uFF1A" }) }),
+        /* @__PURE__ */ jsx3("ul", { children: result.warnings.map((w, i) => /* @__PURE__ */ jsx3("li", { children: w }, i)) })
+      ] }),
+      /* @__PURE__ */ jsx3("div", { className: "alert warn", children: /* @__PURE__ */ jsxs3("p", { children: [
+        "\u5982\u9700\u5728\u76EE\u6807\u5BA2\u6237\u7AEF\u770B\u5230\u8BE5\u4F1A\u8BDD\uFF0C\u53EF\u80FD\u9700\u8981",
+        /* @__PURE__ */ jsx3("b", { children: "\u91CD\u542F\u76EE\u6807\u5BA2\u6237\u7AEF" }),
+        "\uFF08\u5B83\u53EA\u5728\u542F\u52A8\u65F6\u8BFB\u7D22\u5F15\uFF09\u3002"
+      ] }) }),
+      /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
+        /* @__PURE__ */ jsx3("div", {}),
+        /* @__PURE__ */ jsxs3("div", { children: [
+          /* @__PURE__ */ jsx3("button", { onClick: onBack, children: "\u5B8C\u6210" }),
+          /* @__PURE__ */ jsx3("button", { onClick: () => {
+            setResult(null);
+            setPhase("pick");
+          }, children: "\u518D\u8F6C\u4E00\u4E2A" })
+        ] })
+      ] })
+    ] });
+  }
+  if (phase === "preview" && preview) {
+    return /* @__PURE__ */ jsxs3("div", { className: "dialog wide", children: [
+      /* @__PURE__ */ jsx3("h3", { children: "\u4E0A\u4E0B\u6587\u9884\u89C8" }),
+      /* @__PURE__ */ jsxs3("div", { className: "alert info", children: [
+        /* @__PURE__ */ jsxs3("p", { children: [
+          /* @__PURE__ */ jsx3("b", { children: preview.session?.title }),
+          "\uFF08",
+          preview.session?.turns,
+          " \u8F6E\uFF09"
+        ] }),
+        /* @__PURE__ */ jsx3("p", { style: { fontSize: 12, whiteSpace: "pre-wrap" }, children: preview.statsText })
+      ] }),
+      /* @__PURE__ */ jsx3("div", { style: { maxHeight: 400, overflow: "auto", border: "1px solid #333", padding: 12, borderRadius: 6 }, children: /* @__PURE__ */ jsx3("pre", { style: { whiteSpace: "pre-wrap", fontSize: 12, margin: 0 }, children: preview.context }) }),
+      /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
+        /* @__PURE__ */ jsx3("div", {}),
+        /* @__PURE__ */ jsxs3("div", { children: [
+          /* @__PURE__ */ jsx3("button", { onClick: () => setPhase("pick"), children: "\u8FD4\u56DE" }),
+          /* @__PURE__ */ jsx3(
+            "button",
+            {
+              className: "primary",
+              onClick: () => {
+                const blob = new Blob([preview.context], { type: "text/markdown" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `context-${preview.session?.id?.slice(0, 8) ?? "session"}.md`;
+                a.click();
+                URL.revokeObjectURL(url);
+              },
+              children: "\u4E0B\u8F7D Markdown"
+            }
+          )
+        ] })
+      ] })
+    ] });
+  }
+  const detected = clients.filter((c) => c.detected);
+  const targetOptions = caps.filter((c) => c.canWrite && clients.some((x) => x.kind === c.client && x.detected));
+  const selectedSession = sessions.find((s) => s.id === selected);
+  return /* @__PURE__ */ jsxs3("div", { className: "dialog wide", children: [
+    /* @__PURE__ */ jsx3("h3", { children: "\u8DE8\u7AEF\u8F6C\u6362" }),
+    platformNote && /* @__PURE__ */ jsx3("p", { className: "muted", style: { fontSize: 12 }, children: platformNote }),
+    /* @__PURE__ */ jsxs3("div", { className: "filters", style: { flexWrap: "wrap", gap: 8 }, children: [
+      /* @__PURE__ */ jsx3("span", { className: "muted", children: "\u5DF2\u68C0\u6D4B\uFF1A" }),
+      detected.length === 0 && /* @__PURE__ */ jsx3("span", { className: "muted", children: "\uFF08\u672A\u68C0\u6D4B\u5230\u4EFB\u4F55\u5BA2\u6237\u7AEF\uFF09" }),
+      detected.map((c) => /* @__PURE__ */ jsxs3("span", { style: { fontSize: 12, padding: "2px 8px", border: "1px solid #444", borderRadius: 4 }, children: [
+        c.label,
+        c.sessionCount != null ? ` \xB7 ${c.sessionCount}` : ""
+      ] }, c.kind))
+    ] }),
+    /* @__PURE__ */ jsxs3("div", { className: "filters", style: { gap: 16 }, children: [
+      /* @__PURE__ */ jsxs3("label", { children: [
+        "\u6E90\u5BA2\u6237\u7AEF\uFF1A",
+        /* @__PURE__ */ jsxs3("select", { value: source, onChange: (e) => {
+          setSource(e.target.value);
+          setSelected("");
+        }, children: [
+          /* @__PURE__ */ jsx3("option", { value: "", children: "\u8BF7\u9009\u62E9" }),
+          detected.filter((c) => c.canRead).map((c) => /* @__PURE__ */ jsx3("option", { value: c.kind, children: c.label }, c.kind))
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs3("label", { children: [
+        "\u76EE\u6807\u5BA2\u6237\u7AEF\uFF1A",
+        /* @__PURE__ */ jsxs3("select", { value: target, onChange: (e) => setTarget(e.target.value), children: [
+          /* @__PURE__ */ jsx3("option", { value: "", children: "\u8BF7\u9009\u62E9" }),
+          targetOptions.filter((c) => c.client !== source).map((c) => /* @__PURE__ */ jsx3("option", { value: c.client, children: c.label }, c.client))
+        ] })
+      ] })
+    ] }),
+    losses.length > 0 && /* @__PURE__ */ jsxs3("div", { className: "alert warn", children: [
+      /* @__PURE__ */ jsx3("p", { children: /* @__PURE__ */ jsx3("b", { children: "\u26A0\uFE0F \u8F6C\u6362\u4F1A\u4E22\u5931\u4EE5\u4E0B\u4FE1\u606F\uFF1A" }) }),
+      /* @__PURE__ */ jsx3("ul", { style: { margin: 0, paddingLeft: 20 }, children: losses.map((l, i) => /* @__PURE__ */ jsx3("li", { style: { fontSize: 12 }, children: l }, i)) })
+    ] }),
+    /* @__PURE__ */ jsxs3("div", { className: "filters", children: [
+      /* @__PURE__ */ jsx3("input", { placeholder: "\u6309\u6807\u9898\u6216\u8DEF\u5F84\u7B5B\u9009\u2026", value: keyword, onChange: (e) => setKeyword(e.target.value) }),
+      /* @__PURE__ */ jsx3("button", { onClick: () => {
+        setSessions([]);
+        setSource(source);
+      }, children: "\u5237\u65B0" })
+    ] }),
+    /* @__PURE__ */ jsxs3("table", { className: "sessions", children: [
+      /* @__PURE__ */ jsx3("thead", { children: /* @__PURE__ */ jsxs3("tr", { children: [
+        /* @__PURE__ */ jsx3("th", { style: { width: 32 } }),
+        /* @__PURE__ */ jsx3("th", { children: "\u6807\u9898" }),
+        /* @__PURE__ */ jsx3("th", { children: "\u4F1A\u8BDD ID" }),
+        /* @__PURE__ */ jsx3("th", { children: "\u8F6E\u6B21" }),
+        /* @__PURE__ */ jsx3("th", { children: "\u6700\u540E\u66F4\u65B0" }),
+        /* @__PURE__ */ jsx3("th", { children: "\u5DE5\u4F5C\u76EE\u5F55" })
+      ] }) }),
+      /* @__PURE__ */ jsxs3("tbody", { children: [
+        visible.length === 0 && /* @__PURE__ */ jsx3("tr", { children: /* @__PURE__ */ jsx3("td", { colSpan: 6, className: "muted", children: "\u8BE5\u5BA2\u6237\u7AEF\u6CA1\u6709\u53EF\u8BFB\u53D6\u7684\u4F1A\u8BDD" }) }),
+        visible.map((s) => /* @__PURE__ */ jsxs3("tr", { className: selected === s.id ? "checked" : "", onClick: () => setSelected(s.id), children: [
+          /* @__PURE__ */ jsx3("td", { children: /* @__PURE__ */ jsx3("input", { type: "radio", checked: selected === s.id, onChange: () => setSelected(s.id) }) }),
+          /* @__PURE__ */ jsx3("td", { title: s.title, children: s.title }),
+          /* @__PURE__ */ jsxs3("td", { className: "path", title: s.id, children: [
+            "\u2026",
+            s.id.slice(-8)
+          ] }),
+          /* @__PURE__ */ jsx3("td", { children: s.turns ?? "\u2014" }),
+          /* @__PURE__ */ jsx3("td", { children: new Date(s.updatedAt).toLocaleString("zh-CN", { hour12: false }) }),
+          /* @__PURE__ */ jsx3("td", { className: "path", title: s.cwd, children: s.cwd.slice(0, 40) })
+        ] }, s.id))
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs3("div", { className: "filters", children: [
+      /* @__PURE__ */ jsxs3("label", { style: { fontSize: 12 }, children: [
+        "\u4E0A\u4E0B\u6587\u9884\u7B97\uFF1A",
+        /* @__PURE__ */ jsxs3("select", { value: budget, onChange: (e) => setBudget(Number(e.target.value)), children: [
+          /* @__PURE__ */ jsx3("option", { value: 2e5, children: "200k\uFF08\u9ED8\u8BA4\uFF09" }),
+          /* @__PURE__ */ jsx3("option", { value: 128e3, children: "128k" }),
+          /* @__PURE__ */ jsx3("option", { value: 64e3, children: "64k" }),
+          /* @__PURE__ */ jsx3("option", { value: 32e3, children: "32k" }),
+          /* @__PURE__ */ jsx3("option", { value: 16e3, children: "16k" })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsx3("button", { disabled: !selected, onClick: doPreview, children: "\u9884\u89C8\u538B\u7F29\u4E0A\u4E0B\u6587" })
+    ] }),
+    /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
+      /* @__PURE__ */ jsx3("span", { children: selectedSession ? `\u5DF2\u9009\uFF1A${selectedSession.title.slice(0, 30)}` : "\u8BF7\u9009\u62E9\u8981\u8F6C\u6362\u7684\u4F1A\u8BDD" }),
+      /* @__PURE__ */ jsxs3("div", { children: [
+        /* @__PURE__ */ jsx3("button", { onClick: onBack, children: "\u53D6\u6D88" }),
+        /* @__PURE__ */ jsx3("button", { className: "primary", disabled: !selected || !target, onClick: doTransfer, children: "\u5F00\u59CB\u8F6C\u6362" })
+      ] })
+    ] }),
+    error && /* @__PURE__ */ jsx3("div", { className: "alert error", children: error })
+  ] });
+}
+
 // src/client/LogPanel.tsx
 
 
@@ -678,10 +1010,10 @@ var OP_LABEL = {
 };
 var PHASE_ICON = { start: "\u23F3", ok: "\u2705", fail: "\u274C" };
 function LogPanel({ apiBase }) {
-  const [open, setOpen] = useState3(false);
-  const [logs, setLogs] = useState3([]);
-  const [loading, setLoading] = useState3(false);
-  const load = useCallback3(async () => {
+  const [open, setOpen] = useState4(false);
+  const [logs, setLogs] = useState4([]);
+  const [loading, setLoading] = useState4(false);
+  const load = useCallback4(async () => {
     setLoading(true);
     try {
       const r = await fetch(`${apiBase}/logs?limit=100`);
@@ -691,26 +1023,26 @@ function LogPanel({ apiBase }) {
     }
     setLoading(false);
   }, [apiBase]);
-  useEffect3(() => {
+  useEffect4(() => {
     if (open) void load();
   }, [open, load]);
-  return /* @__PURE__ */ jsxs3("div", { className: "log-panel", children: [
-    /* @__PURE__ */ jsx3("button", { className: "link", onClick: () => setOpen((v) => !v), children: open ? "\u6536\u8D77\u64CD\u4F5C\u65E5\u5FD7" : "\u67E5\u770B\u64CD\u4F5C\u65E5\u5FD7" }),
-    open && /* @__PURE__ */ jsxs3("div", { className: "log-body", children: [
-      /* @__PURE__ */ jsxs3("div", { className: "log-header", children: [
-        /* @__PURE__ */ jsx3("span", { children: "\u6700\u8FD1 100 \u6761\u8BB0\u5F55" }),
-        /* @__PURE__ */ jsx3("button", { onClick: load, disabled: loading, children: loading ? "\u5237\u65B0\u4E2D\u2026" : "\u5237\u65B0" })
+  return /* @__PURE__ */ jsxs4("div", { className: "log-panel", children: [
+    /* @__PURE__ */ jsx4("button", { className: "link", onClick: () => setOpen((v) => !v), children: open ? "\u6536\u8D77\u64CD\u4F5C\u65E5\u5FD7" : "\u67E5\u770B\u64CD\u4F5C\u65E5\u5FD7" }),
+    open && /* @__PURE__ */ jsxs4("div", { className: "log-body", children: [
+      /* @__PURE__ */ jsxs4("div", { className: "log-header", children: [
+        /* @__PURE__ */ jsx4("span", { children: "\u6700\u8FD1 100 \u6761\u8BB0\u5F55" }),
+        /* @__PURE__ */ jsx4("button", { onClick: load, disabled: loading, children: loading ? "\u5237\u65B0\u4E2D\u2026" : "\u5237\u65B0" })
       ] }),
-      logs.length === 0 && /* @__PURE__ */ jsx3("p", { className: "muted", children: "\u6682\u65E0\u8BB0\u5F55\u3002" }),
-      /* @__PURE__ */ jsx3("ul", { children: logs.map((l) => /* @__PURE__ */ jsxs3("li", { className: l.phase, children: [
-        /* @__PURE__ */ jsx3("span", { className: "time", children: new Date(l.at).toLocaleString() }),
-        /* @__PURE__ */ jsxs3("span", { className: "op", children: [
+      logs.length === 0 && /* @__PURE__ */ jsx4("p", { className: "muted", children: "\u6682\u65E0\u8BB0\u5F55\u3002" }),
+      /* @__PURE__ */ jsx4("ul", { children: logs.map((l) => /* @__PURE__ */ jsxs4("li", { className: l.phase, children: [
+        /* @__PURE__ */ jsx4("span", { className: "time", children: new Date(l.at).toLocaleString() }),
+        /* @__PURE__ */ jsxs4("span", { className: "op", children: [
           PHASE_ICON[l.phase] ?? "",
           " ",
           OP_LABEL[l.op] ?? l.op
         ] }),
-        /* @__PURE__ */ jsx3("span", { className: "msg", children: l.message }),
-        l.sessionId && /* @__PURE__ */ jsx3("span", { className: "sid", children: l.sessionId })
+        /* @__PURE__ */ jsx4("span", { className: "msg", children: l.message }),
+        l.sessionId && /* @__PURE__ */ jsx4("span", { className: "sid", children: l.sessionId })
       ] }, l.id)) })
     ] })
   ] });
@@ -731,36 +1063,84 @@ function detectRuntime() {
 
 function CodexBridgeSettings({ apiBase = "/plugins/dsh-codex-bridge" }) {
   const runtime = detectRuntime();
-  const [view, setView] = useState4("home");
-  const [status, setStatus] = useState4(null);
-  const [error, setError] = useState4(null);
-  useEffect4(() => {
+  const [view, setView] = useState5("home");
+  const [status, setStatus] = useState5(null);
+  const [clients, setClients] = useState5([]);
+  const [platformNote, setPlatformNote] = useState5("");
+  const [error, setError] = useState5(null);
+  const loadStatus = useCallback5(() => {
     fetch(`${apiBase}/status`).then((r) => r.json()).then((d) => {
       if (d.ok) setStatus(d);
     }).catch(() => setError("\u65E0\u6CD5\u8FDE\u63A5\u5230\u63D2\u4EF6\u670D\u52A1\uFF0C\u8BF7\u786E\u8BA4 DSH \u6B63\u5728\u8FD0\u884C\u3002"));
+    fetch(`${apiBase}/clients`).then((r) => r.json()).then((d) => {
+      if (d.ok) {
+        setClients(d.clients ?? []);
+        setPlatformNote(d.platform?.note ?? "");
+      }
+    }).catch(() => {
+    });
   }, [apiBase]);
+  useEffect5(() => {
+    loadStatus();
+  }, [loadStatus]);
   if (view === "import") {
-    return /* @__PURE__ */ jsx4(ImportDialog, { apiBase, onBack: () => setView("home") });
+    return /* @__PURE__ */ jsx5(ImportDialog, { apiBase, onBack: () => setView("home") });
   }
   if (view === "export") {
-    return /* @__PURE__ */ jsx4(ExportDialog, { apiBase, onBack: () => setView("home") });
+    return /* @__PURE__ */ jsx5(ExportDialog, { apiBase, onBack: () => setView("home") });
   }
-  return /* @__PURE__ */ jsxs4("div", { className: "codex-bridge-settings", children: [
-    /* @__PURE__ */ jsx4("h2", { children: "Codex \u4F1A\u8BDD\u6865\u63A5" }),
-    /* @__PURE__ */ jsx4("p", { className: "muted", children: "\u6253\u901A Codex \u4E0E DeepSeek Harness \u7684\u4F1A\u8BDD\u6570\u636E\uFF0C\u652F\u6301\u53CC\u5411\u5BFC\u5165\u5BFC\u51FA\u3002" }),
-    /* @__PURE__ */ jsx4("div", { className: "env-badge desktop", children: runtime === "desktop" ? "\u684C\u9762\u7AEF\uFF1A\u53EF\u626B\u63CF\u672C\u673A Codex \u76EE\u5F55\uFF0C\u652F\u6301\u672C\u5730\u6587\u4EF6\u8BFB\u5199" : "\u672C\u673A\u6A21\u5F0F\uFF1A\u76EE\u5F55\u8BFB\u5199\u7531 DSH \u540E\u7AEF\u5904\u7406\uFF0C\u53EF\u76F4\u63A5\u626B\u63CF\u4E0E\u5BFC\u5165\u5BFC\u51FA" }),
-    error && /* @__PURE__ */ jsx4("div", { className: "alert error", children: error }),
-    status && /* @__PURE__ */ jsxs4("dl", { className: "paths", children: [
-      /* @__PURE__ */ jsx4("dt", { children: "Codex \u76EE\u5F55" }),
-      /* @__PURE__ */ jsx4("dd", { children: status.codexDir }),
-      /* @__PURE__ */ jsx4("dt", { children: "DSH \u4F1A\u8BDD\u76EE\u5F55" }),
-      /* @__PURE__ */ jsx4("dd", { children: status.dshSessionsRoot })
+  if (view === "transfer") {
+    return /* @__PURE__ */ jsx5(TransferDialog, { apiBase, onBack: () => setView("home") });
+  }
+  const detected = clients.filter((c) => c.detected);
+  return /* @__PURE__ */ jsxs5("div", { className: "codex-bridge-settings", children: [
+    /* @__PURE__ */ jsx5("h2", { children: "\u4F1A\u8BDD\u6865\u63A5" }),
+    /* @__PURE__ */ jsxs5("p", { className: "muted", children: [
+      "\u6253\u901A ",
+      /* @__PURE__ */ jsx5("b", { children: "Codex" }),
+      " / ",
+      /* @__PURE__ */ jsx5("b", { children: "DeepSeek Harness" }),
+      " / ",
+      /* @__PURE__ */ jsx5("b", { children: "Zcode" }),
+      " / ",
+      /* @__PURE__ */ jsx5("b", { children: "Claude Code" }),
+      " / ",
+      /* @__PURE__ */ jsx5("b", { children: "WorkBuddy" }),
+      " \u4E94\u7AEF\u4F1A\u8BDD\u3002"
     ] }),
-    /* @__PURE__ */ jsxs4("div", { className: "actions", children: [
-      /* @__PURE__ */ jsx4("button", { className: "primary", onClick: () => setView("import"), children: "\u5BFC\u5165 CodeX \u4F1A\u8BDD" }),
-      /* @__PURE__ */ jsx4("button", { className: "primary", onClick: () => setView("export"), children: "\u5BFC\u51FA\u81F3 Codex" })
+    /* @__PURE__ */ jsx5("div", { className: "env-badge desktop", children: runtime === "desktop" ? "\u684C\u9762\u7AEF\uFF1A\u53EF\u626B\u63CF\u672C\u673A\u5BA2\u6237\u7AEF\u76EE\u5F55\uFF0C\u652F\u6301\u672C\u5730\u6587\u4EF6\u8BFB\u5199" : "\u672C\u673A\u6A21\u5F0F\uFF1A\u76EE\u5F55\u8BFB\u5199\u7531 DSH \u540E\u7AEF\u5904\u7406\uFF0C\u53EF\u76F4\u63A5\u626B\u63CF\u4E0E\u5BFC\u5165\u5BFC\u51FA" }),
+    error && /* @__PURE__ */ jsx5("div", { className: "alert error", children: error }),
+    platformNote && /* @__PURE__ */ jsx5("p", { className: "muted", style: { fontSize: 12 }, children: platformNote }),
+    /* @__PURE__ */ jsxs5("div", { style: { margin: "12px 0" }, children: [
+      /* @__PURE__ */ jsx5("div", { className: "muted", style: { fontSize: 12, marginBottom: 6 }, children: "\u5DF2\u68C0\u6D4B\u5230\u7684\u5BA2\u6237\u7AEF\uFF1A" }),
+      detected.length === 0 && /* @__PURE__ */ jsx5("span", { className: "muted", children: "\uFF08\u672A\u68C0\u6D4B\u5230\uFF0C\u8BF7\u786E\u8BA4\u5DF2\u5B89\u88C5\u5BF9\u5E94\u5BA2\u6237\u7AEF\uFF09" }),
+      detected.map((c) => /* @__PURE__ */ jsxs5(
+        "span",
+        {
+          title: c.reason ?? "",
+          style: { fontSize: 12, padding: "2px 8px", marginRight: 6, border: "1px solid #444", borderRadius: 4, display: "inline-block", marginBottom: 4 },
+          children: [
+            c.label,
+            c.sessionCount != null ? ` \xB7 ${c.sessionCount} \u4F1A\u8BDD` : "",
+            !c.canWrite ? "\uFF08\u53EA\u8BFB\uFF09" : ""
+          ]
+        },
+        c.kind
+      ))
     ] }),
-    /* @__PURE__ */ jsx4(LogPanel, { apiBase })
+    status && /* @__PURE__ */ jsxs5("dl", { className: "paths", children: [
+      /* @__PURE__ */ jsx5("dt", { children: "Codex \u76EE\u5F55" }),
+      /* @__PURE__ */ jsx5("dd", { children: status.codexDir }),
+      /* @__PURE__ */ jsx5("dt", { children: "DSH \u4F1A\u8BDD\u76EE\u5F55" }),
+      /* @__PURE__ */ jsx5("dd", { children: status.dshSessionsRoot })
+    ] }),
+    /* @__PURE__ */ jsxs5("div", { className: "actions", children: [
+      /* @__PURE__ */ jsx5("button", { className: "primary", onClick: () => setView("transfer"), children: "\u8DE8\u7AEF\u8F6C\u6362 / \u4E0A\u4E0B\u6587\u9884\u89C8" }),
+      /* @__PURE__ */ jsx5("button", { className: "primary", onClick: () => setView("import"), children: "\u5BFC\u5165 Codex \u4F1A\u8BDD" }),
+      /* @__PURE__ */ jsx5("button", { className: "primary", onClick: () => setView("export"), children: "\u5BFC\u51FA\u81F3 Codex / WorkBuddy" })
+    ] }),
+    /* @__PURE__ */ jsx5("p", { className: "muted", style: { fontSize: 12 }, children: "\u63D0\u793A\uFF1A\u8DE8\u7AEF\u8F6C\u6362\u652F\u6301 Zcode / Claude Code\uFF08UIR \u9002\u914D\u5668\u5DF2\u5B9E\u73B0\uFF09\uFF0C \u5176\u4F59\u7AEF\u8D70\u4E13\u7528\u8F6C\u6362\u5668\u3002\u8F6C\u6362\u524D\u4F1A\u663E\u793A\u635F\u5931\u63D0\u793A\u3002" }),
+    /* @__PURE__ */ jsx5(LogPanel, { apiBase })
   ] });
 }
 
@@ -839,7 +1219,7 @@ function apply(ctx) {
   }
 }
 function PluginSettingsSection(props) {
-  return React5.createElement("section", { className: "plugin-settings-section" }, props.children);
+  return React6.createElement("section", { className: "plugin-settings-section" }, props.children);
 }
 
 
