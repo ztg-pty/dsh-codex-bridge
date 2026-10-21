@@ -503,7 +503,7 @@ function renderFull(session: UirSession): string {
 function renderTurnFull(turn: UirTurn): string {
   const lines: string[] = [`## 第 ${turn.index + 1} 轮`];
   for (const b of turn.userMessages) {
-    if (b.kind === 'text') lines.push(`**用户**：${b.text}`);
+    if (b.kind === 'text') lines.push(`**用户**：${demoteHeadings(b.text)}`);
   }
   for (const step of turn.steps) {
     for (const b of step.blocks) lines.push(renderBlockFull(b));
@@ -514,7 +514,9 @@ function renderTurnFull(turn: UirTurn): string {
 function renderBlockFull(b: UirBlock): string {
   switch (b.kind) {
     case 'text':
-      return b.role === 'assistant' ? `**助手**：${b.text}` : `**${b.role}**：${b.text}`;
+      return b.role === 'assistant'
+        ? `**助手**：${demoteHeadings(b.text)}`
+        : `**${b.role}**：${demoteHeadings(b.text)}`;
     case 'reasoning':
       return b.encrypted
         ? `> [加密思考 · 无法解码 · ${b.encryptedBytes ?? 0} 字节]`
@@ -545,7 +547,7 @@ function renderTurnL2(turn: UirTurn, focus: string[], stats: SummarizeStats): st
   // 用户输入：保留原文（用户意图最重要）
   for (const b of turn.userMessages) {
     if (b.kind === 'text') {
-      lines.push(`**用户**：${truncate(b.text, 1500)}`);
+      lines.push(`**用户**：${demoteHeadings(truncate(b.text, 1500))}`);
     }
   }
 
@@ -564,7 +566,7 @@ function renderTurnL2(turn: UirTurn, focus: string[], stats: SummarizeStats): st
         case 'text': {
           if (b.role !== 'assistant') break;
           const compressed = compressText(b.text, focus, stats);
-          if (compressed) lines.push(`**助手**：${compressed}`);
+          if (compressed) lines.push(`**助手**：${demoteHeadings(compressed)}`);
           break;
         }
         case 'reasoning': {
@@ -718,6 +720,16 @@ function truncate(s: string, max: number): string {
   if (!s) return '';
   if (s.length <= max) return s;
   return s.slice(0, max) + `…（省略 ${s.length - max} 字符）`;
+}
+
+/**
+ * 降级原文里的 Markdown 标题，避免和本引擎的 `## 第 N 轮` 结构混淆。
+ * 做法：把行首的 `#` 替换为 `▪`（保留视觉层级感，但不被解析为标题）。
+ */
+function demoteHeadings(text: string): string {
+  if (!text) return text;
+  return text.replace(/^(\s{0,3})(#{1,6})(\s+)/gm, (_m, indent: string, hashes: string, space: string) =>
+    `${indent}${'▪'.repeat(hashes.length)}${space}`);
 }
 
 // ───────────────────────── 统计与大纲 ─────────────────────────
