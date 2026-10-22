@@ -12,7 +12,7 @@ let react = require("react");
 		let react_jsx_runtime = require("react/jsx-runtime");
 
 const jsx5 = react_jsx_runtime["jsx"]; const jsxs5 = react_jsx_runtime["jsxs"];
-const jsx4 = react_jsx_runtime["jsx"]; const jsxs4 = react_jsx_runtime["jsxs"];
+const Fragment2 = react_jsx_runtime["Fragment"]; const jsx4 = react_jsx_runtime["jsx"]; const jsxs4 = react_jsx_runtime["jsxs"];
 const useCallback4 = react["useCallback"]; const useEffect4 = react["useEffect"]; const useState4 = react["useState"];
 const Fragment = react_jsx_runtime["Fragment"]; const jsx3 = react_jsx_runtime["jsx"]; const jsxs3 = react_jsx_runtime["jsxs"];
 const useCallback3 = react["useCallback"]; const useEffect3 = react["useEffect"]; const useMemo3 = react["useMemo"]; const useState3 = react["useState"];
@@ -911,101 +911,133 @@ function TransferDialog({ apiBase, onBack }) {
   const selectedSession = sessions.find((s) => s.id === selected);
   return /* @__PURE__ */ jsxs3("div", { className: "dialog wide", children: [
     /* @__PURE__ */ jsx3("h3", { children: "\u8DE8\u7AEF\u8F6C\u6362" }),
-    platformNote && /* @__PURE__ */ jsx3("p", { className: "muted", style: { fontSize: 12 }, children: platformNote }),
-    /* @__PURE__ */ jsxs3("div", { className: "filters", style: { flexWrap: "wrap", gap: 8 }, children: [
-      /* @__PURE__ */ jsx3("span", { className: "muted", children: "\u5DF2\u68C0\u6D4B\uFF1A" }),
-      detected.length === 0 && /* @__PURE__ */ jsx3("span", { className: "muted", children: "\uFF08\u672A\u68C0\u6D4B\u5230\u4EFB\u4F55\u5BA2\u6237\u7AEF\uFF09" }),
-      detected.map((c) => /* @__PURE__ */ jsxs3("span", { style: { fontSize: 12, padding: "2px 8px", border: "1px solid #444", borderRadius: 4 }, children: [
+    /* @__PURE__ */ jsxs3("div", { className: "cb-chips", children: [
+      detected.length === 0 && /* @__PURE__ */ jsx3("span", { className: "muted", children: "\u672A\u68C0\u6D4B\u5230\u4EFB\u4F55\u5BA2\u6237\u7AEF" }),
+      detected.map((c) => /* @__PURE__ */ jsxs3("span", { className: "cb-badge cb-badge-ok", children: [
+        /* @__PURE__ */ jsx3("span", { className: "cb-dot" }),
         c.label,
         c.sessionCount != null ? ` \xB7 ${c.sessionCount}` : ""
       ] }, c.kind))
     ] }),
-    /* @__PURE__ */ jsxs3("div", { className: "filters", style: { gap: 16, alignItems: "flex-end" }, children: [
-      /* @__PURE__ */ jsxs3("label", { children: [
-        "\u6E90\u5BA2\u6237\u7AEF\uFF08\u4ECE\u8FD9\u91CC\u8BFB\uFF09\uFF1A",
-        /* @__PURE__ */ jsxs3("select", { value: source, onChange: (e) => {
-          setSource(e.target.value);
-          setSelected("");
-          setTarget("");
-        }, children: [
-          /* @__PURE__ */ jsx3("option", { value: "", children: "\u8BF7\u9009\u62E9" }),
-          detected.filter((c) => c.canRead).map((c) => /* @__PURE__ */ jsxs3("option", { value: c.kind, children: [
-            c.label,
-            c.sessionCount != null ? `\uFF08${c.sessionCount} \u4E2A\u4F1A\u8BDD\uFF09` : ""
-          ] }, c.kind))
-        ] })
-      ] }),
-      /* @__PURE__ */ jsx3("span", { style: { fontSize: 18, padding: "0 4px" }, children: "\u2192" }),
-      /* @__PURE__ */ jsxs3("label", { children: [
-        "\u76EE\u6807\u5BA2\u6237\u7AEF\uFF08\u5199\u5230\u8FD9\u91CC\uFF09\uFF1A",
-        /* @__PURE__ */ jsxs3("select", { value: target, onChange: (e) => setTarget(e.target.value), disabled: !source, children: [
-          /* @__PURE__ */ jsx3("option", { value: "", children: source ? "\u8BF7\u9009\u62E9" : "\u8BF7\u5148\u9009\u6E90\u5BA2\u6237\u7AEF" }),
-          targetOptions.filter((c) => c.client !== source).map((c) => /* @__PURE__ */ jsxs3("option", { value: c.client, children: [
-            c.label,
-            c.client === "dsh" ? "\uFF08DSH \u4E3B\u7A0B\u5E8F\uFF09" : ""
-          ] }, c.client))
-        ] })
-      ] })
-    ] }),
-    source && /* @__PURE__ */ jsx3("p", { style: { fontSize: 12, margin: "4px 0" }, children: target ? /* @__PURE__ */ jsxs3(Fragment, { children: [
-      "\u5C06\u628A ",
-      /* @__PURE__ */ jsx3("b", { children: clients.find((c) => c.kind === source)?.label }),
-      " \u7684\u4F1A\u8BDD\u8F6C\u6362\u5230 ",
-      /* @__PURE__ */ jsx3("b", { children: caps.find((c) => c.client === target)?.label })
-    ] }) : /* @__PURE__ */ jsxs3(Fragment, { children: [
-      "\u5DF2\u9009\u6E90\u7AEF ",
-      /* @__PURE__ */ jsx3("b", { children: clients.find((c) => c.kind === source)?.label }),
-      "\uFF0C\u8BF7\u9009\u62E9\u76EE\u6807\u5BA2\u6237\u7AEF\uFF08\u53EF\u9009 ",
-      targetOptions.filter((c) => c.client !== source).length,
-      " \u9879\uFF09"
-    ] }) }),
-    losses.length > 0 && /* @__PURE__ */ jsxs3("div", { className: "alert warn", children: [
-      /* @__PURE__ */ jsx3("p", { children: /* @__PURE__ */ jsx3("b", { children: "\u26A0\uFE0F \u8F6C\u6362\u4F1A\u4E22\u5931\u4EE5\u4E0B\u4FE1\u606F\uFF1A" }) }),
-      /* @__PURE__ */ jsx3("ul", { style: { margin: 0, paddingLeft: 20 }, children: losses.map((l, i) => /* @__PURE__ */ jsx3("li", { style: { fontSize: 12 }, children: l }, i)) })
-    ] }),
-    /* @__PURE__ */ jsxs3("div", { className: "filters", children: [
-      /* @__PURE__ */ jsx3("input", { placeholder: "\u6309\u6807\u9898\u6216\u8DEF\u5F84\u7B5B\u9009\u2026", value: keyword, onChange: (e) => setKeyword(e.target.value) }),
-      /* @__PURE__ */ jsx3("button", { onClick: () => {
-        setSessions([]);
-        setSource(source);
-      }, children: "\u5237\u65B0" })
-    ] }),
-    /* @__PURE__ */ jsxs3("table", { className: "sessions", children: [
-      /* @__PURE__ */ jsx3("thead", { children: /* @__PURE__ */ jsxs3("tr", { children: [
-        /* @__PURE__ */ jsx3("th", { style: { width: 32 } }),
-        /* @__PURE__ */ jsx3("th", { children: "\u6807\u9898" }),
-        /* @__PURE__ */ jsx3("th", { children: "\u4F1A\u8BDD ID" }),
-        /* @__PURE__ */ jsx3("th", { children: "\u8F6E\u6B21" }),
-        /* @__PURE__ */ jsx3("th", { children: "\u6700\u540E\u66F4\u65B0" }),
-        /* @__PURE__ */ jsx3("th", { children: "\u5DE5\u4F5C\u76EE\u5F55" })
-      ] }) }),
-      /* @__PURE__ */ jsxs3("tbody", { children: [
-        visible.length === 0 && /* @__PURE__ */ jsx3("tr", { children: /* @__PURE__ */ jsx3("td", { colSpan: 6, className: "muted", children: "\u8BE5\u5BA2\u6237\u7AEF\u6CA1\u6709\u53EF\u8BFB\u53D6\u7684\u4F1A\u8BDD" }) }),
-        visible.map((s) => /* @__PURE__ */ jsxs3("tr", { className: selected === s.id ? "checked" : "", onClick: () => setSelected(s.id), children: [
-          /* @__PURE__ */ jsx3("td", { children: /* @__PURE__ */ jsx3("input", { type: "radio", checked: selected === s.id, onChange: () => setSelected(s.id) }) }),
-          /* @__PURE__ */ jsx3("td", { title: s.title, children: s.title }),
-          /* @__PURE__ */ jsxs3("td", { className: "path", title: s.id, children: [
-            "\u2026",
-            s.id.slice(-8)
+    /* @__PURE__ */ jsxs3("div", { className: "cb-card", children: [
+      /* @__PURE__ */ jsx3("div", { className: "cb-card-head", children: /* @__PURE__ */ jsx3("span", { className: "cb-card-title", children: "\u8F6C\u6362\u65B9\u5411" }) }),
+      /* @__PURE__ */ jsxs3("div", { className: "cb-card-body", children: [
+        /* @__PURE__ */ jsxs3("div", { className: "filters", style: { gap: 12, alignItems: "flex-end" }, children: [
+          /* @__PURE__ */ jsxs3("label", { style: { flex: "1 1 200px" }, children: [
+            "\u6E90\uFF08\u4ECE\u8FD9\u91CC\u8BFB\uFF09",
+            /* @__PURE__ */ jsxs3(
+              "select",
+              {
+                style: { flex: 1 },
+                value: source,
+                onChange: (e) => {
+                  setSource(e.target.value);
+                  setSelected("");
+                  setTarget("");
+                },
+                children: [
+                  /* @__PURE__ */ jsx3("option", { value: "", children: "\u8BF7\u9009\u62E9" }),
+                  detected.filter((c) => c.canRead).map((c) => /* @__PURE__ */ jsxs3("option", { value: c.kind, children: [
+                    c.label,
+                    c.sessionCount != null ? `\uFF08${c.sessionCount}\uFF09` : ""
+                  ] }, c.kind))
+                ]
+              }
+            )
           ] }),
-          /* @__PURE__ */ jsx3("td", { children: s.turns ?? "\u2014" }),
-          /* @__PURE__ */ jsx3("td", { children: new Date(s.updatedAt).toLocaleString("zh-CN", { hour12: false }) }),
-          /* @__PURE__ */ jsx3("td", { className: "path", title: s.cwd, children: s.cwd.slice(0, 40) })
-        ] }, s.id))
+          /* @__PURE__ */ jsx3("span", { style: { fontSize: 16, paddingBottom: 6, opacity: 0.5 }, children: "\u2192" }),
+          /* @__PURE__ */ jsxs3("label", { style: { flex: "1 1 200px" }, children: [
+            "\u76EE\u6807\uFF08\u5199\u5230\u8FD9\u91CC\uFF09",
+            /* @__PURE__ */ jsxs3(
+              "select",
+              {
+                style: { flex: 1 },
+                value: target,
+                onChange: (e) => setTarget(e.target.value),
+                disabled: !source,
+                children: [
+                  /* @__PURE__ */ jsx3("option", { value: "", children: source ? "\u8BF7\u9009\u62E9" : "\u8BF7\u5148\u9009\u6E90" }),
+                  targetOptions.filter((c) => c.client !== source).map((c) => /* @__PURE__ */ jsxs3("option", { value: c.client, children: [
+                    c.label,
+                    c.client === "dsh" ? "\uFF08DSH \u4E3B\u7A0B\u5E8F\uFF09" : ""
+                  ] }, c.client))
+                ]
+              }
+            )
+          ] })
+        ] }),
+        source && /* @__PURE__ */ jsx3("div", { className: "cb-row-hint", style: { marginTop: 2 }, children: target ? /* @__PURE__ */ jsxs3(Fragment, { children: [
+          "\u5C06\u628A ",
+          /* @__PURE__ */ jsx3("b", { style: { color: "var(--cb-text)" }, children: clients.find((c) => c.kind === source)?.label }),
+          " \u7684\u4F1A\u8BDD\u8F6C\u6362\u5230 ",
+          /* @__PURE__ */ jsx3("b", { style: { color: "var(--cb-accent)" }, children: caps.find((c) => c.client === target)?.label })
+        ] }) : /* @__PURE__ */ jsxs3(Fragment, { children: [
+          "\u5DF2\u9009\u6E90\u7AEF ",
+          /* @__PURE__ */ jsx3("b", { style: { color: "var(--cb-text)" }, children: clients.find((c) => c.kind === source)?.label }),
+          "\uFF0C\u8BF7\u9009\u62E9\u76EE\u6807\uFF08\u53EF\u9009 ",
+          targetOptions.filter((c) => c.client !== source).length,
+          " \u9879\uFF09"
+        ] }) })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs3("div", { className: "filters", children: [
-      /* @__PURE__ */ jsxs3("label", { style: { fontSize: 12 }, children: [
-        "\u4E0A\u4E0B\u6587\u9884\u7B97\uFF1A",
-        /* @__PURE__ */ jsxs3("select", { value: budget, onChange: (e) => setBudget(Number(e.target.value)), children: [
-          /* @__PURE__ */ jsx3("option", { value: 2e5, children: "200k\uFF08\u9ED8\u8BA4\uFF09" }),
-          /* @__PURE__ */ jsx3("option", { value: 128e3, children: "128k" }),
-          /* @__PURE__ */ jsx3("option", { value: 64e3, children: "64k" }),
-          /* @__PURE__ */ jsx3("option", { value: 32e3, children: "32k" }),
-          /* @__PURE__ */ jsx3("option", { value: 16e3, children: "16k" })
-        ] })
+    losses.length > 0 && /* @__PURE__ */ jsxs3("div", { className: "alert warn", children: [
+      /* @__PURE__ */ jsx3("p", { children: /* @__PURE__ */ jsx3("b", { children: "\u8F6C\u6362\u4F1A\u4E22\u5931\u4EE5\u4E0B\u4FE1\u606F" }) }),
+      /* @__PURE__ */ jsx3("ul", { children: losses.map((l, i) => /* @__PURE__ */ jsx3("li", { children: l }, i)) })
+    ] }),
+    /* @__PURE__ */ jsxs3("div", { className: "cb-card", children: [
+      /* @__PURE__ */ jsxs3("div", { className: "cb-card-head", children: [
+        /* @__PURE__ */ jsxs3("span", { className: "cb-card-title", children: [
+          "\u9009\u62E9\u4F1A\u8BDD",
+          visible.length > 0 && /* @__PURE__ */ jsx3("span", { className: "cb-badge", children: visible.length })
+        ] }),
+        /* @__PURE__ */ jsx3("button", { className: "cb-btn-ghost cb-btn-sm", onClick: () => {
+          const s = source;
+          setSource("");
+          setTimeout(() => setSource(s), 0);
+        }, children: "\u5237\u65B0" })
       ] }),
-      /* @__PURE__ */ jsx3("button", { disabled: !selected, onClick: doPreview, children: "\u9884\u89C8\u538B\u7F29\u4E0A\u4E0B\u6587" })
+      /* @__PURE__ */ jsxs3("div", { className: "cb-card-body", style: { padding: 0 }, children: [
+        /* @__PURE__ */ jsx3("div", { className: "filters", style: { padding: "10px 14px" }, children: /* @__PURE__ */ jsx3("input", { placeholder: "\u6309\u6807\u9898\u6216\u8DEF\u5F84\u7B5B\u9009\u2026", value: keyword, onChange: (e) => setKeyword(e.target.value) }) }),
+        /* @__PURE__ */ jsx3("div", { className: "cb-table-wrap", style: { border: "none", borderRadius: 0, maxHeight: 320, overflow: "auto" }, children: /* @__PURE__ */ jsxs3("table", { className: "sessions", children: [
+          /* @__PURE__ */ jsx3("thead", { children: /* @__PURE__ */ jsxs3("tr", { children: [
+            /* @__PURE__ */ jsx3("th", { style: { width: 32 } }),
+            /* @__PURE__ */ jsx3("th", { children: "\u6807\u9898" }),
+            /* @__PURE__ */ jsx3("th", { children: "\u4F1A\u8BDD ID" }),
+            /* @__PURE__ */ jsx3("th", { children: "\u8F6E\u6B21" }),
+            /* @__PURE__ */ jsx3("th", { children: "\u66F4\u65B0" })
+          ] }) }),
+          /* @__PURE__ */ jsxs3("tbody", { children: [
+            visible.length === 0 && /* @__PURE__ */ jsx3("tr", { children: /* @__PURE__ */ jsx3("td", { colSpan: 5, className: "muted", style: { padding: 16 }, children: "\u8BE5\u5BA2\u6237\u7AEF\u6CA1\u6709\u53EF\u8BFB\u53D6\u7684\u4F1A\u8BDD" }) }),
+            visible.map((s) => /* @__PURE__ */ jsxs3("tr", { className: selected === s.id ? "checked" : "", onClick: () => setSelected(s.id), children: [
+              /* @__PURE__ */ jsx3("td", { children: /* @__PURE__ */ jsx3("input", { type: "radio", checked: selected === s.id, onChange: () => setSelected(s.id) }) }),
+              /* @__PURE__ */ jsx3("td", { title: s.title, children: s.title }),
+              /* @__PURE__ */ jsxs3("td", { className: "path", title: s.id, children: [
+                "\u2026",
+                s.id.slice(-8)
+              ] }),
+              /* @__PURE__ */ jsx3("td", { children: s.turns ?? "\u2014" }),
+              /* @__PURE__ */ jsx3("td", { children: new Date(s.updatedAt).toLocaleDateString("zh-CN") })
+            ] }, s.id))
+          ] })
+        ] }) })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs3("div", { className: "cb-card", children: [
+      /* @__PURE__ */ jsx3("div", { className: "cb-card-head", children: /* @__PURE__ */ jsx3("span", { className: "cb-card-title", children: "\u4E0A\u4E0B\u6587\u9884\u89C8" }) }),
+      /* @__PURE__ */ jsx3("div", { className: "cb-card-desc", children: "\u5148\u628A\u4F1A\u8BDD\u538B\u7F29\u6210 Markdown \u770B\u770B\u6548\u679C\uFF0C\u518D\u51B3\u5B9A\u662F\u5426\u8F6C\u6362\u3002" }),
+      /* @__PURE__ */ jsx3("div", { className: "cb-card-body", children: /* @__PURE__ */ jsxs3("div", { className: "filters", children: [
+        /* @__PURE__ */ jsxs3("label", { children: [
+          "\u9884\u7B97",
+          /* @__PURE__ */ jsxs3("select", { value: budget, onChange: (e) => setBudget(Number(e.target.value)), children: [
+            /* @__PURE__ */ jsx3("option", { value: 2e5, children: "200k\uFF08\u9ED8\u8BA4\uFF09" }),
+            /* @__PURE__ */ jsx3("option", { value: 128e3, children: "128k" }),
+            /* @__PURE__ */ jsx3("option", { value: 64e3, children: "64k" }),
+            /* @__PURE__ */ jsx3("option", { value: 32e3, children: "32k" }),
+            /* @__PURE__ */ jsx3("option", { value: 16e3, children: "16k" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx3("button", { disabled: !selected, onClick: doPreview, children: "\u9884\u89C8\u538B\u7F29\u4E0A\u4E0B\u6587" })
+      ] }) })
     ] }),
     /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
       /* @__PURE__ */ jsx3("span", { children: selectedSession ? `\u5DF2\u9009\uFF1A${selectedSession.title.slice(0, 30)}` : "\u8BF7\u9009\u62E9\u8981\u8F6C\u6362\u7684\u4F1A\u8BDD" }),
@@ -1026,6 +1058,7 @@ var OP_LABEL = {
   export: "\u5BFC\u51FA",
   backup: "\u5907\u4EFD",
   scan: "\u626B\u63CF",
+  transfer: "\u8F6C\u6362",
   error: "\u9519\u8BEF"
 };
 var PHASE_ICON = { start: "\u23F3", ok: "\u2705", fail: "\u274C" };
@@ -1046,139 +1079,732 @@ function LogPanel({ apiBase }) {
   useEffect4(() => {
     if (open) void load();
   }, [open, load]);
-  return /* @__PURE__ */ jsxs4("div", { className: "log-panel", children: [
-    /* @__PURE__ */ jsx4("button", { className: "link", onClick: () => setOpen((v) => !v), children: open ? "\u6536\u8D77\u64CD\u4F5C\u65E5\u5FD7" : "\u67E5\u770B\u64CD\u4F5C\u65E5\u5FD7" }),
-    open && /* @__PURE__ */ jsxs4("div", { className: "log-body", children: [
-      /* @__PURE__ */ jsxs4("div", { className: "log-header", children: [
-        /* @__PURE__ */ jsx4("span", { children: "\u6700\u8FD1 100 \u6761\u8BB0\u5F55" }),
-        /* @__PURE__ */ jsx4("button", { onClick: load, disabled: loading, children: loading ? "\u5237\u65B0\u4E2D\u2026" : "\u5237\u65B0" })
+  return /* @__PURE__ */ jsxs4("div", { className: "cb-card log-panel", children: [
+    /* @__PURE__ */ jsxs4("div", { className: "cb-card-head", children: [
+      /* @__PURE__ */ jsxs4("span", { className: "cb-card-title", children: [
+        "\u64CD\u4F5C\u65E5\u5FD7",
+        logs.length > 0 && /* @__PURE__ */ jsx4("span", { className: "cb-badge", children: logs.length })
       ] }),
-      logs.length === 0 && /* @__PURE__ */ jsx4("p", { className: "muted", children: "\u6682\u65E0\u8BB0\u5F55\u3002" }),
-      /* @__PURE__ */ jsx4("ul", { children: logs.map((l) => /* @__PURE__ */ jsxs4("li", { className: l.phase, children: [
-        /* @__PURE__ */ jsx4("span", { className: "time", children: new Date(l.at).toLocaleString() }),
-        /* @__PURE__ */ jsxs4("span", { className: "op", children: [
-          PHASE_ICON[l.phase] ?? "",
-          " ",
-          OP_LABEL[l.op] ?? l.op
-        ] }),
-        /* @__PURE__ */ jsx4("span", { className: "msg", children: l.message }),
-        l.sessionId && /* @__PURE__ */ jsx4("span", { className: "sid", children: l.sessionId })
-      ] }, l.id)) })
+      /* @__PURE__ */ jsxs4("div", { style: { display: "flex", gap: 6 }, children: [
+        open && /* @__PURE__ */ jsx4("button", { className: "cb-btn-ghost cb-btn-sm", onClick: load, disabled: loading, children: loading ? "\u5237\u65B0\u4E2D\u2026" : "\u5237\u65B0" }),
+        /* @__PURE__ */ jsx4("button", { className: "cb-btn-ghost cb-btn-sm", onClick: () => setOpen((v) => !v), children: open ? "\u6536\u8D77" : "\u5C55\u5F00" })
+      ] })
+    ] }),
+    open && /* @__PURE__ */ jsxs4(Fragment2, { children: [
+      /* @__PURE__ */ jsx4("div", { className: "cb-card-desc", children: "\u6700\u8FD1 100 \u6761\u8BB0\u5F55\uFF08\u5BFC\u5165 / \u5BFC\u51FA / \u5907\u4EFD / \u8F6C\u6362\uFF09" }),
+      /* @__PURE__ */ jsxs4("div", { className: "log-body", children: [
+        logs.length === 0 && /* @__PURE__ */ jsx4("p", { className: "muted", style: { padding: "0 14px" }, children: "\u6682\u65E0\u8BB0\u5F55\u3002" }),
+        logs.map((l) => /* @__PURE__ */ jsxs4("div", { className: "msg", children: [
+          /* @__PURE__ */ jsx4("span", { className: "time", children: new Date(l.at).toLocaleTimeString("zh-CN", { hour12: false }) }),
+          /* @__PURE__ */ jsxs4("span", { className: "op", children: [
+            PHASE_ICON[l.phase] ?? "",
+            " ",
+            OP_LABEL[l.op] ?? l.op
+          ] }),
+          /* @__PURE__ */ jsx4("span", { children: l.message }),
+          l.sessionId && /* @__PURE__ */ jsx4("span", { className: "sid", children: String(l.sessionId).slice(0, 8) })
+        ] }, l.id))
+      ] })
     ] })
   ] });
 }
 
-// src/io/adapter.ts
-function detectRuntime() {
-  const g = globalThis;
-  const loc = g.location;
-  if (loc && typeof loc.protocol === "string") {
-    if (loc.protocol === "dsh-app:" || loc.protocol === "file:") return "desktop";
-  }
-  if (typeof g.process !== "undefined" && g.process?.versions?.electron) return "desktop";
-  return "web";
-}
-
 // src/client/SettingsPage.tsx
 
+var CLIENT_ICON = {
+  dsh: "\u25C6",
+  codex: "\u25C7",
+  zcode: "\u25C8",
+  "claude-code": "\u25C9",
+  workbuddy: "\u25CE"
+};
 function CodexBridgeSettings({ apiBase = "/plugins/dsh-codex-bridge" }) {
-  const runtime = detectRuntime();
   const [view, setView] = useState5("home");
   const [status, setStatus] = useState5(null);
   const [clients, setClients] = useState5([]);
   const [platformNote, setPlatformNote] = useState5("");
   const [error, setError] = useState5(null);
+  const [loading, setLoading] = useState5(true);
   const loadStatus = useCallback5(() => {
-    fetch(`${apiBase}/status`).then((r) => r.json()).then((d) => {
-      if (d.ok) setStatus(d);
-    }).catch(() => setError("\u65E0\u6CD5\u8FDE\u63A5\u5230\u63D2\u4EF6\u670D\u52A1\uFF0C\u8BF7\u786E\u8BA4 DSH \u6B63\u5728\u8FD0\u884C\u3002"));
-    fetch(`${apiBase}/clients`).then((r) => r.json()).then((d) => {
-      if (d.ok) {
-        setClients(d.clients ?? []);
-        setPlatformNote(d.platform?.note ?? "");
+    setLoading(true);
+    Promise.all([
+      fetch(`${apiBase}/status`).then((r) => r.json()).catch(() => null),
+      fetch(`${apiBase}/clients`).then((r) => r.json()).catch(() => null)
+    ]).then(([s, c]) => {
+      if (s?.ok) setStatus(s);
+      else setError("\u65E0\u6CD5\u8FDE\u63A5\u5230\u63D2\u4EF6\u670D\u52A1\uFF0C\u8BF7\u786E\u8BA4 DSH \u6B63\u5728\u8FD0\u884C\u3002");
+      if (c?.ok) {
+        setClients(c.clients ?? []);
+        setPlatformNote(c.platform?.note ?? "");
       }
-    }).catch(() => {
+      setLoading(false);
     });
   }, [apiBase]);
   useEffect5(() => {
     loadStatus();
   }, [loadStatus]);
-  if (view === "import") {
-    return /* @__PURE__ */ jsx5(ImportDialog, { apiBase, onBack: () => setView("home") });
-  }
-  if (view === "export") {
-    return /* @__PURE__ */ jsx5(ExportDialog, { apiBase, onBack: () => setView("home") });
-  }
-  if (view === "transfer") {
-    return /* @__PURE__ */ jsx5(TransferDialog, { apiBase, onBack: () => setView("home") });
-  }
+  if (view === "import") return /* @__PURE__ */ jsx5(ImportDialog, { apiBase, onBack: () => setView("home") });
+  if (view === "export") return /* @__PURE__ */ jsx5(ExportDialog, { apiBase, onBack: () => setView("home") });
+  if (view === "transfer") return /* @__PURE__ */ jsx5(TransferDialog, { apiBase, onBack: () => setView("home") });
   const detected = clients.filter((c) => c.detected);
+  const missing = clients.filter((c) => !c.detected);
   return /* @__PURE__ */ jsxs5("div", { className: "codex-bridge-settings", children: [
     /* @__PURE__ */ jsx5("h2", { children: "\u4F1A\u8BDD\u6865\u63A5" }),
-    /* @__PURE__ */ jsxs5("p", { className: "muted", children: [
-      "\u6253\u901A ",
-      /* @__PURE__ */ jsx5("b", { children: "Codex" }),
-      " / ",
-      /* @__PURE__ */ jsx5("b", { children: "DeepSeek Harness" }),
-      " / ",
-      /* @__PURE__ */ jsx5("b", { children: "Zcode" }),
-      " / ",
-      /* @__PURE__ */ jsx5("b", { children: "Claude Code" }),
-      " / ",
-      /* @__PURE__ */ jsx5("b", { children: "WorkBuddy" }),
-      " \u4E94\u7AEF\u4F1A\u8BDD\u3002"
-    ] }),
-    /* @__PURE__ */ jsx5("div", { className: "env-badge desktop", children: runtime === "desktop" ? "\u684C\u9762\u7AEF\uFF1A\u53EF\u626B\u63CF\u672C\u673A\u5BA2\u6237\u7AEF\u76EE\u5F55\uFF0C\u652F\u6301\u672C\u5730\u6587\u4EF6\u8BFB\u5199" : "\u672C\u673A\u6A21\u5F0F\uFF1A\u76EE\u5F55\u8BFB\u5199\u7531 DSH \u540E\u7AEF\u5904\u7406\uFF0C\u53EF\u76F4\u63A5\u626B\u63CF\u4E0E\u5BFC\u5165\u5BFC\u51FA" }),
+    /* @__PURE__ */ jsx5("p", { className: "cb-lead", children: "Codex / DeepSeek Harness / Zcode / Claude Code / WorkBuddy \u4E94\u7AEF\u4F1A\u8BDD\u4E92\u901A\u3002" }),
     error && /* @__PURE__ */ jsx5("div", { className: "alert error", children: error }),
-    platformNote && /* @__PURE__ */ jsx5("p", { className: "muted", style: { fontSize: 12 }, children: platformNote }),
-    /* @__PURE__ */ jsxs5("div", { style: { margin: "12px 0" }, children: [
-      /* @__PURE__ */ jsx5("div", { className: "muted", style: { fontSize: 12, marginBottom: 6 }, children: "\u5DF2\u68C0\u6D4B\u5230\u7684\u5BA2\u6237\u7AEF\uFF1A" }),
-      detected.length === 0 && /* @__PURE__ */ jsx5("span", { className: "muted", children: "\uFF08\u672A\u68C0\u6D4B\u5230\uFF0C\u8BF7\u786E\u8BA4\u5DF2\u5B89\u88C5\u5BF9\u5E94\u5BA2\u6237\u7AEF\uFF09" }),
-      detected.map((c) => /* @__PURE__ */ jsxs5(
-        "span",
-        {
-          title: c.reason ?? "",
-          style: { fontSize: 12, padding: "2px 8px", marginRight: 6, border: "1px solid #444", borderRadius: 4, display: "inline-block", marginBottom: 4 },
-          children: [
-            c.label,
-            c.sessionCount != null ? ` \xB7 ${c.sessionCount} \u4F1A\u8BDD` : "",
-            !c.canWrite ? "\uFF08\u53EA\u8BFB\uFF09" : ""
-          ]
-        },
-        c.kind
-      ))
-    ] }),
-    status && /* @__PURE__ */ jsxs5("dl", { className: "paths", children: [
-      /* @__PURE__ */ jsx5("dt", { children: "Codex \u76EE\u5F55" }),
-      /* @__PURE__ */ jsx5("dd", { children: status.codexDir }),
-      /* @__PURE__ */ jsx5("dt", { children: "DSH \u4F1A\u8BDD\u76EE\u5F55" }),
-      /* @__PURE__ */ jsx5("dd", { children: status.dshSessionsRoot })
-    ] }),
-    /* @__PURE__ */ jsxs5("div", { className: "actions", children: [
-      /* @__PURE__ */ jsx5("button", { className: "primary", onClick: () => setView("transfer"), children: "\u8DE8\u7AEF\u8F6C\u6362\uFF08\u4E94\u7AEF\u4E92\u901A\uFF09" }),
-      /* @__PURE__ */ jsx5("button", { onClick: () => setView("import"), children: "\u5BFC\u5165 Codex \u4F1A\u8BDD\u5230 DSH" }),
-      /* @__PURE__ */ jsx5("button", { onClick: () => setView("export"), children: "\u5BFC\u51FA DSH \u4F1A\u8BDD\u5230 Codex / WorkBuddy" })
-    ] }),
-    /* @__PURE__ */ jsxs5("div", { className: "alert info", style: { fontSize: 12, marginTop: 8 }, children: [
-      /* @__PURE__ */ jsx5("p", { style: { margin: 0 }, children: /* @__PURE__ */ jsx5("b", { children: "\u600E\u4E48\u9009\uFF1A" }) }),
-      /* @__PURE__ */ jsxs5("ul", { style: { margin: "4px 0 0", paddingLeft: 20 }, children: [
-        /* @__PURE__ */ jsxs5("li", { children: [
-          /* @__PURE__ */ jsx5("b", { children: "\u4EFB\u610F\u4E24\u7AEF\u4E92\u8F6C" }),
-          "\uFF08\u542B Zcode / Claude Code / WorkBuddy \u2192 DSH\uFF09\u2192 \u7528\u300C\u8DE8\u7AEF\u8F6C\u6362\u300D"
+    /* @__PURE__ */ jsxs5("div", { className: "cb-card", children: [
+      /* @__PURE__ */ jsxs5("div", { className: "cb-card-head", children: [
+        /* @__PURE__ */ jsxs5("span", { className: "cb-card-title", children: [
+          "\u5DF2\u68C0\u6D4B\u5BA2\u6237\u7AEF",
+          /* @__PURE__ */ jsxs5("span", { className: "cb-badge cb-badge-ok", children: [
+            /* @__PURE__ */ jsx5("span", { className: "cb-dot" }),
+            detected.length,
+            " / ",
+            clients.length || 5
+          ] })
         ] }),
-        /* @__PURE__ */ jsxs5("li", { children: [
-          /* @__PURE__ */ jsx5("b", { children: "Codex \u2192 DSH" }),
-          "\uFF08\u5E26\u5DE5\u4F5C\u533A\u9009\u62E9\u3001\u53BB\u91CD\u3001\u52A0\u5BC6\u5360\u4F4D\uFF09\u2192 \u7528\u300C\u5BFC\u5165 Codex \u4F1A\u8BDD\u300D"
-        ] }),
-        /* @__PURE__ */ jsxs5("li", { children: [
-          /* @__PURE__ */ jsx5("b", { children: "DSH \u2192 Codex / WorkBuddy" }),
-          "\uFF08\u5E26\u81EA\u52A8\u5907\u4EFD\u3001Codex \u7D22\u5F15\u6CE8\u518C\uFF09\u2192 \u7528\u300C\u5BFC\u51FA DSH \u4F1A\u8BDD\u300D"
-        ] })
+        /* @__PURE__ */ jsx5("button", { className: "cb-btn-ghost cb-btn-sm", onClick: loadStatus, disabled: loading, children: loading ? "\u5237\u65B0\u4E2D\u2026" : "\u5237\u65B0" })
+      ] }),
+      /* @__PURE__ */ jsx5("div", { className: "cb-card-desc", children: "\u81EA\u52A8\u63A2\u6D4B\u672C\u673A\u5B89\u88C5\u7684\u5BA2\u6237\u7AEF\u3002\u53EA\u8BFB\u6807\u8BB0\u8868\u793A\u8BE5\u7AEF\u53EA\u80FD\u8BFB\u53D6\u3001\u4E0D\u80FD\u5199\u5165\u3002" }),
+      /* @__PURE__ */ jsxs5("div", { className: "cb-card-body", children: [
+        clients.length === 0 && /* @__PURE__ */ jsx5("span", { className: "muted", children: "\u6B63\u5728\u63A2\u6D4B\u2026" }),
+        detected.map((c) => /* @__PURE__ */ jsxs5("div", { className: "cb-row", children: [
+          /* @__PURE__ */ jsxs5("div", { className: "cb-row-main", children: [
+            /* @__PURE__ */ jsxs5("div", { className: "cb-row-label", children: [
+              /* @__PURE__ */ jsx5("span", { style: { marginRight: 6, opacity: 0.7 }, children: CLIENT_ICON[c.kind] ?? "\xB7" }),
+              c.label
+            ] }),
+            /* @__PURE__ */ jsx5("div", { className: "cb-row-hint", title: c.home, children: c.home })
+          ] }),
+          /* @__PURE__ */ jsxs5("div", { className: "cb-row-ctrl", children: [
+            c.sessionCount != null && /* @__PURE__ */ jsxs5("span", { className: "cb-badge", children: [
+              c.sessionCount,
+              " \u4F1A\u8BDD"
+            ] }),
+            /* @__PURE__ */ jsxs5("span", { className: `cb-badge ${c.canWrite ? "cb-badge-ok" : ""}`, children: [
+              /* @__PURE__ */ jsx5("span", { className: "cb-dot" }),
+              c.canWrite ? "\u53EF\u8BFB\u5199" : "\u53EA\u8BFB"
+            ] })
+          ] })
+        ] }, c.kind)),
+        missing.length > 0 && /* @__PURE__ */ jsx5("div", { className: "cb-row", children: /* @__PURE__ */ jsx5("div", { className: "cb-row-main", children: /* @__PURE__ */ jsxs5("div", { className: "cb-row-hint", children: [
+          "\u672A\u68C0\u6D4B\u5230\uFF1A",
+          missing.map((c) => c.label).join("\u3001")
+        ] }) }) }),
+        platformNote && /* @__PURE__ */ jsx5("div", { className: "cb-row", children: /* @__PURE__ */ jsx5("div", { className: "cb-row-main", children: /* @__PURE__ */ jsx5("div", { className: "cb-row-hint", children: platformNote }) }) })
       ] })
+    ] }),
+    /* @__PURE__ */ jsxs5("div", { className: "cb-card", children: [
+      /* @__PURE__ */ jsx5("div", { className: "cb-card-head", children: /* @__PURE__ */ jsx5("span", { className: "cb-card-title", children: "\u64CD\u4F5C" }) }),
+      /* @__PURE__ */ jsx5("div", { className: "cb-card-desc", children: "\u4E09\u4E2A\u5165\u53E3\u80FD\u529B\u4E0D\u540C\uFF0C\u6309\u9700\u6C42\u9009\u62E9\u3002" }),
+      /* @__PURE__ */ jsx5("div", { className: "cb-card-body", children: /* @__PURE__ */ jsxs5("div", { className: "actions", children: [
+        /* @__PURE__ */ jsxs5("button", { className: "cb-action cb-action-primary", onClick: () => setView("transfer"), children: [
+          /* @__PURE__ */ jsx5("span", { className: "cb-action-title", children: "\u8DE8\u7AEF\u8F6C\u6362" }),
+          /* @__PURE__ */ jsx5("span", { className: "cb-action-desc", children: "\u4EFB\u610F\u4E24\u7AEF\u4E92\u8F6C\uFF08\u542B Zcode / Claude Code \u2192 DSH\uFF09\uFF0C\u652F\u6301\u4E0A\u4E0B\u6587\u9884\u89C8\u4E0E\u538B\u7F29" })
+        ] }),
+        /* @__PURE__ */ jsxs5("button", { className: "cb-action", onClick: () => setView("import"), children: [
+          /* @__PURE__ */ jsx5("span", { className: "cb-action-title", children: "\u5BFC\u5165 Codex \u2192 DSH" }),
+          /* @__PURE__ */ jsx5("span", { className: "cb-action-desc", children: "\u5E26\u5DE5\u4F5C\u533A\u9009\u62E9\u3001\u53BB\u91CD\u3001\u52A0\u5BC6\u5185\u5BB9\u5360\u4F4D" })
+        ] }),
+        /* @__PURE__ */ jsxs5("button", { className: "cb-action", onClick: () => setView("export"), children: [
+          /* @__PURE__ */ jsx5("span", { className: "cb-action-title", children: "\u5BFC\u51FA DSH \u2192 Codex / WorkBuddy" }),
+          /* @__PURE__ */ jsx5("span", { className: "cb-action-desc", children: "\u81EA\u52A8\u5907\u4EFD\u65E7\u6587\u4EF6\u3001\u6CE8\u518C Codex \u7D22\u5F15" })
+        ] })
+      ] }) })
+    ] }),
+    status && /* @__PURE__ */ jsxs5("div", { className: "cb-card", children: [
+      /* @__PURE__ */ jsx5("div", { className: "cb-card-head", children: /* @__PURE__ */ jsx5("span", { className: "cb-card-title", children: "\u5B58\u50A8\u4F4D\u7F6E" }) }),
+      /* @__PURE__ */ jsx5("div", { className: "cb-card-body", children: /* @__PURE__ */ jsxs5("dl", { className: "paths", children: [
+        /* @__PURE__ */ jsx5("dt", { children: "Codex \u76EE\u5F55" }),
+        /* @__PURE__ */ jsx5("dd", { children: status.codexDir }),
+        /* @__PURE__ */ jsx5("dt", { children: "DSH \u4F1A\u8BDD\u76EE\u5F55" }),
+        /* @__PURE__ */ jsx5("dd", { children: status.dshSessionsRoot })
+      ] }) })
     ] }),
     /* @__PURE__ */ jsx5(LogPanel, { apiBase })
   ] });
 }
+
+// src/client/styles.ts
+var BRIDGE_CSS_ID = "dsh-codex-bridge/styles.css";
+function injectStyles() {
+  if (typeof document === "undefined") return () => {
+  };
+  const selector = `style[data-plugin-css="${BRIDGE_CSS_ID}"]`;
+  if (document.querySelector(selector) !== null) {
+    return () => {
+    };
+  }
+  const tag = document.createElement("style");
+  tag.dataset.plugin = "dsh-codex-bridge";
+  tag.dataset.pluginCss = BRIDGE_CSS_ID;
+  tag.textContent = BRIDGE_CSS;
+  document.head.appendChild(tag);
+  return () => {
+    tag.remove();
+  };
+}
+var BRIDGE_CSS = `
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u53D8\u91CF \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.codex-bridge-settings {
+  --cb-bg: #1b1b1f;
+  --cb-bg-soft: #222228;
+  --cb-bg-hover: #2a2a32;
+  --cb-border: #33333d;
+  --cb-border-soft: #2a2a33;
+  --cb-text: #e8e8ec;
+  --cb-text-dim: #9a9aa8;
+  --cb-text-faint: #6e6e7e;
+  --cb-accent: #4f8cff;
+  --cb-accent-soft: rgba(79, 140, 255, 0.14);
+  --cb-success: #3ecf8e;
+  --cb-warn: #e8b339;
+  --cb-error: #f0605d;
+  --cb-radius: 10px;
+  --cb-radius-sm: 6px;
+  --cb-gap: 12px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 2px 24px;
+  color: var(--cb-text);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u6807\u9898\u533A \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.codex-bridge-settings > h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 2px;
+  letter-spacing: -0.01em;
+}
+
+.codex-bridge-settings .cb-lead {
+  margin: 0;
+  color: var(--cb-text-dim);
+  font-size: 13px;
+}
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u5206\u7EC4\u5361\u7247 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.codex-bridge-settings .cb-card {
+  background: var(--cb-bg-soft);
+  border: 1px solid var(--cb-border-soft);
+  border-radius: var(--cb-radius);
+  overflow: hidden;
+}
+
+.codex-bridge-settings .cb-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--cb-border-soft);
+}
+
+.codex-bridge-settings .cb-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+.codex-bridge-settings .cb-card-desc {
+  padding: 0 14px 10px;
+  color: var(--cb-text-faint);
+  font-size: 12px;
+  border-bottom: 1px solid var(--cb-border-soft);
+}
+
+.codex-bridge-settings .cb-card-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u884C\uFF08\u6807\u7B7E + \u53F3\u4FA7\u63A7\u4EF6\uFF09 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.codex-bridge-settings .cb-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+}
+
+.codex-bridge-settings .cb-row-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.codex-bridge-settings .cb-row-label {
+  font-size: 13px;
+  color: var(--cb-text);
+}
+
+.codex-bridge-settings .cb-row-hint {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--cb-text-faint);
+  line-height: 1.5;
+}
+
+.codex-bridge-settings .cb-row-ctrl {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u6309\u94AE \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.codex-bridge-settings button,
+.codex-bridge-settings .cb-btn {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 7px 14px;
+  border-radius: var(--cb-radius-sm);
+  border: 1px solid var(--cb-border);
+  background: var(--cb-bg);
+  color: var(--cb-text);
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease, opacity 0.14s ease;
+  white-space: nowrap;
+}
+
+.codex-bridge-settings button:hover:not(:disabled) {
+  background: var(--cb-bg-hover);
+  border-color: #444450;
+}
+
+.codex-bridge-settings button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.codex-bridge-settings button.primary {
+  background: var(--cb-accent);
+  border-color: var(--cb-accent);
+  color: #fff;
+  font-weight: 500;
+}
+
+.codex-bridge-settings button.primary:hover:not(:disabled) {
+  background: #5f97ff;
+  border-color: #5f97ff;
+}
+
+.codex-bridge-settings button.cb-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--cb-text-dim);
+  padding: 6px 10px;
+}
+
+.codex-bridge-settings button.cb-btn-ghost:hover:not(:disabled) {
+  background: var(--cb-bg-hover);
+  color: var(--cb-text);
+}
+
+.codex-bridge-settings button.cb-btn-sm {
+  font-size: 11.5px;
+  padding: 4px 10px;
+}
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u52A8\u4F5C\u6309\u94AE\u7EC4 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.codex-bridge-settings .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.codex-bridge-settings .cb-action {
+  flex: 1 1 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 12px 14px;
+  text-align: left;
+  border-radius: var(--cb-radius);
+  border: 1px solid var(--cb-border-soft);
+  background: var(--cb-bg-soft);
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+
+.codex-bridge-settings .cb-action:hover {
+  background: var(--cb-bg-hover);
+  border-color: var(--cb-border);
+}
+
+.codex-bridge-settings .cb-action-primary {
+  border-color: rgba(79, 140, 255, 0.45);
+  background: var(--cb-accent-soft);
+}
+
+.codex-bridge-settings .cb-action-primary:hover {
+  background: rgba(79, 140, 255, 0.2);
+  border-color: var(--cb-accent);
+}
+
+.codex-bridge-settings .cb-action-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cb-text);
+}
+
+.codex-bridge-settings .cb-action-desc {
+  font-size: 11.5px;
+  color: var(--cb-text-faint);
+  line-height: 1.5;
+  white-space: normal;
+}
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u5FBD\u7AE0 / \u6807\u7B7E \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.codex-bridge-settings .cb-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--cb-border);
+  background: var(--cb-bg);
+  color: var(--cb-text-dim);
+  white-space: nowrap;
+}
+
+.codex-bridge-settings .cb-badge-ok {
+  border-color: rgba(62, 207, 142, 0.4);
+  background: rgba(62, 207, 142, 0.1);
+  color: var(--cb-success);
+}
+
+.codex-bridge-settings .cb-badge-off {
+  border-color: var(--cb-border-soft);
+  color: var(--cb-text-faint);
+}
+
+.codex-bridge-settings .cb-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.codex-bridge-settings .cb-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u63D0\u793A\u6761 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.codex-bridge-settings .alert {
+  padding: 10px 12px;
+  border-radius: var(--cb-radius-sm);
+  border: 1px solid var(--cb-border-soft);
+  background: var(--cb-bg-soft);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.codex-bridge-settings .alert.info {
+  border-color: rgba(79, 140, 255, 0.32);
+  background: rgba(79, 140, 255, 0.08);
+}
+
+.codex-bridge-settings .alert.success {
+  border-color: rgba(62, 207, 142, 0.32);
+  background: rgba(62, 207, 142, 0.08);
+}
+
+.codex-bridge-settings .alert.warn {
+  border-color: rgba(232, 179, 57, 0.32);
+  background: rgba(232, 179, 57, 0.08);
+}
+
+.codex-bridge-settings .alert.error {
+  border-color: rgba(240, 96, 93, 0.32);
+  background: rgba(240, 96, 93, 0.08);
+}
+
+.codex-bridge-settings .alert p { margin: 0; }
+.codex-bridge-settings .alert p + p { margin-top: 6px; }
+.codex-bridge-settings .alert ul { margin: 6px 0 0; padding-left: 18px; }
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u8868\u5355\u63A7\u4EF6 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.codex-bridge-settings .filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.codex-bridge-settings .filters > label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--cb-text-dim);
+}
+
+.codex-bridge-settings input[type="text"],
+.codex-bridge-settings input[type="search"],
+.codex-bridge-settings input:not([type]),
+.codex-bridge-settings select {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 6px 10px;
+  border-radius: var(--cb-radius-sm);
+  border: 1px solid var(--cb-border);
+  background: var(--cb-bg);
+  color: var(--cb-text);
+  outline: none;
+  transition: border-color 0.14s ease;
+  min-width: 0;
+}
+
+.codex-bridge-settings input:focus,
+.codex-bridge-settings select:focus {
+  border-color: var(--cb-accent);
+}
+
+.codex-bridge-settings input[type="radio"],
+.codex-bridge-settings input[type="checkbox"] {
+  accent-color: var(--cb-accent);
+  cursor: pointer;
+}
+
+.codex-bridge-settings .filters > input[type="text"],
+.codex-bridge-settings .filters > input {
+  flex: 1 1 200px;
+}
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u8868\u683C \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.codex-bridge-settings .cb-table-wrap {
+  border: 1px solid var(--cb-border-soft);
+  border-radius: var(--cb-radius-sm);
+  overflow: hidden;
+}
+
+.codex-bridge-settings table.sessions {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.codex-bridge-settings table.sessions thead th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 11.5px;
+  color: var(--cb-text-faint);
+  padding: 8px 10px;
+  background: var(--cb-bg);
+  border-bottom: 1px solid var(--cb-border-soft);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.codex-bridge-settings table.sessions tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(42, 42, 51, 0.7);
+  vertical-align: middle;
+}
+
+.codex-bridge-settings table.sessions tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.codex-bridge-settings table.sessions tbody tr {
+  transition: background 0.12s ease;
+}
+
+.codex-bridge-settings table.sessions tbody tr:hover {
+  background: rgba(255, 255, 255, 0.025);
+  cursor: pointer;
+}
+
+.codex-bridge-settings table.sessions tbody tr.checked {
+  background: var(--cb-accent-soft);
+}
+
+.codex-bridge-settings .path,
+.codex-bridge-settings code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--cb-text-dim);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1px 5px;
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+.codex-bridge-settings .reason {
+  color: var(--cb-text-faint);
+  font-size: 11.5px;
+  max-width: 320px;
+}
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u5BF9\u8BDD\u6846 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.codex-bridge-settings .dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 2px 20px;
+  color: var(--cb-text);
+  font-size: 13px;
+}
+
+.codex-bridge-settings .dialog h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.codex-bridge-settings .dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid var(--cb-border-soft);
+  font-size: 12px;
+  color: var(--cb-text-dim);
+}
+
+.codex-bridge-settings .dialog-footer > div {
+  display: flex;
+  gap: 8px;
+}
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u5176\u4ED6 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.codex-bridge-settings .muted {
+  color: var(--cb-text-faint);
+}
+
+.codex-bridge-settings dl.paths {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 11.5px;
+}
+
+.codex-bridge-settings dl.paths dt {
+  color: var(--cb-text-faint);
+  white-space: nowrap;
+}
+
+.codex-bridge-settings dl.paths dd {
+  margin: 0;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  color: var(--cb-text-dim);
+  word-break: break-all;
+}
+
+.codex-bridge-settings .spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--cb-border);
+  border-top-color: var(--cb-accent);
+  border-radius: 50%;
+  animation: cb-spin 0.8s linear infinite;
+  align-self: flex-start;
+}
+
+@keyframes cb-spin {
+  to { transform: rotate(360deg); }
+}
+
+.codex-bridge-settings .progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--cb-bg);
+  overflow: hidden;
+}
+
+.codex-bridge-settings .progress > div {
+  height: 100%;
+  background: var(--cb-accent);
+  transition: width 0.2s ease;
+}
+
+/* \u65E5\u5FD7\u9762\u677F */
+.codex-bridge-settings .log-panel {
+  border: 1px solid var(--cb-border-soft);
+  border-radius: var(--cb-radius);
+  overflow: hidden;
+  background: var(--cb-bg-soft);
+}
+
+.codex-bridge-settings .log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--cb-border-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.codex-bridge-settings .log-body {
+  max-height: 260px;
+  overflow: auto;
+  padding: 8px 0;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11px;
+}
+
+.codex-bridge-settings .log-body .msg {
+  display: flex;
+  gap: 8px;
+  padding: 3px 14px;
+  color: var(--cb-text-dim);
+  line-height: 1.5;
+}
+
+.codex-bridge-settings .log-body .msg:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.codex-bridge-settings .log-body .time {
+  color: var(--cb-text-faint);
+  flex-shrink: 0;
+}
+
+.codex-bridge-settings .log-body .op {
+  flex-shrink: 0;
+  color: var(--cb-accent);
+}
+
+.codex-bridge-settings .log-body .sid {
+  color: var(--cb-text-faint);
+  flex-shrink: 0;
+}
+
+/* \u6DF1\u8272\u6EDA\u52A8\u6761 */
+.codex-bridge-settings ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.codex-bridge-settings ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.codex-bridge-settings ::-webkit-scrollbar-thumb {
+  background: #3a3a46;
+  border-radius: 4px;
+}
+.codex-bridge-settings ::-webkit-scrollbar-thumb:hover {
+  background: #4a4a58;
+}
+`;
 
 // src/client.ts
 var PACKAGE_NAME = "dsh-codex-bridge";
@@ -1191,9 +1817,18 @@ function apply(ctx) {
   try {
     console.info("[codex-bridge] client apply \u5F00\u59CB\uFF1Bslots:", typeof ctx.slots !== "undefined", "| locale:", typeof ctx.locale !== "undefined", "| remote:", typeof ctx.remote !== "undefined");
     try {
+      const disposeCss = injectStyles();
+      if (typeof ctx.effect === "function") {
+        ctx.effect(() => disposeCss, "codexBridge.styles");
+      }
+      console.info("[codex-bridge] \u6837\u5F0F\u5DF2\u6CE8\u5165");
+    } catch (e) {
+      console.warn("[codex-bridge] \u6837\u5F0F\u6CE8\u5165\u5931\u8D25\uFF08\u4E0D\u5F71\u54CD\u529F\u80FD\uFF09:", e);
+    }
+    try {
       ctx.locale?.register?.("settings.codexBridge", {
-        zh: { title: "Codex \u4F1A\u8BDD\u6865\u63A5" },
-        en: { title: "Codex Session Bridge" }
+        zh: { title: "\u4F1A\u8BDD\u6865\u63A5" },
+        en: { title: "Session Bridge" }
       });
     } catch {
     }

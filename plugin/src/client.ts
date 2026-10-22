@@ -17,6 +17,7 @@
  */
 import React from 'react';
 import { CodexBridgeSettings } from './client/SettingsPage';
+import { injectStyles } from './client/styles';
 
 const PACKAGE_NAME = 'dsh-codex-bridge';
 const PLUGIN_SETTINGS_SECTION_ID = 'plugin-settings';
@@ -32,11 +33,22 @@ export function apply(ctx: any): void {
   try {
     console.info('[codex-bridge] client apply 开始；slots:', typeof ctx.slots !== 'undefined', '| locale:', typeof ctx.locale !== 'undefined', '| remote:', typeof ctx.remote !== 'undefined');
 
+    // ★ 注入插件样式（运行时 <style> 标签，幂等）
+    try {
+      const disposeCss = injectStyles();
+      if (typeof ctx.effect === 'function') {
+        ctx.effect(() => disposeCss, 'codexBridge.styles');
+      }
+      console.info('[codex-bridge] 样式已注入');
+    } catch (e) {
+      console.warn('[codex-bridge] 样式注入失败（不影响功能）:', e);
+    }
+
     // 中文文案
     try {
       ctx.locale?.register?.('settings.codexBridge', {
-        zh: { title: 'Codex 会话桥接' },
-        en: { title: 'Codex Session Bridge' },
+        zh: { title: '会话桥接' },
+        en: { title: 'Session Bridge' },
       });
     } catch { /* 忽略 */ }
 

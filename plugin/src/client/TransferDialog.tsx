@@ -275,103 +275,140 @@ export function TransferDialog({ apiBase, onBack }: Props) {
   return (
     <div className="dialog wide">
       <h3>跨端转换</h3>
-      {platformNote && <p className="muted" style={{ fontSize: 12 }}>{platformNote}</p>}
 
-      {/* 客户端状态 */}
-      <div className="filters" style={{ flexWrap: 'wrap', gap: 8 }}>
-        <span className="muted">已检测：</span>
-        {detected.length === 0 && <span className="muted">（未检测到任何客户端）</span>}
+      {/* 客户端状态徽章 */}
+      <div className="cb-chips">
+        {detected.length === 0 && <span className="muted">未检测到任何客户端</span>}
         {detected.map((c) => (
-          <span key={c.kind} style={{ fontSize: 12, padding: '2px 8px', border: '1px solid #444', borderRadius: 4 }}>
+          <span key={c.kind} className="cb-badge cb-badge-ok">
+            <span className="cb-dot" />
             {c.label}{c.sessionCount != null ? ` · ${c.sessionCount}` : ''}
           </span>
         ))}
       </div>
 
-      {/* 源 / 目标选择 */}
-      <div className="filters" style={{ gap: 16, alignItems: 'flex-end' }}>
-        <label>
-          源客户端（从这里读）：
-          <select value={source} onChange={(e) => { setSource(e.target.value); setSelected(''); setTarget(''); }}>
-            <option value="">请选择</option>
-            {detected.filter((c) => c.canRead).map((c) => (
-              <option key={c.kind} value={c.kind}>
-                {c.label}{c.sessionCount != null ? `（${c.sessionCount} 个会话）` : ''}
-              </option>
-            ))}
-          </select>
-        </label>
-        <span style={{ fontSize: 18, padding: '0 4px' }}>→</span>
-        <label>
-          目标客户端（写到这里）：
-          <select value={target} onChange={(e) => setTarget(e.target.value)} disabled={!source}>
-            <option value="">{source ? '请选择' : '请先选源客户端'}</option>
-            {targetOptions.filter((c) => c.client !== source).map((c) => (
-              <option key={c.client} value={c.client}>
-                {c.label}{c.client === 'dsh' ? '（DSH 主程序）' : ''}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      {/* 源 → 目标 */}
+      <div className="cb-card">
+        <div className="cb-card-head">
+          <span className="cb-card-title">转换方向</span>
+        </div>
+        <div className="cb-card-body">
+          <div className="filters" style={{ gap: 12, alignItems: 'flex-end' }}>
+            <label style={{ flex: '1 1 200px' }}>
+              源（从这里读）
+              <select
+                style={{ flex: 1 }}
+                value={source}
+                onChange={(e) => { setSource(e.target.value); setSelected(''); setTarget(''); }}
+              >
+                <option value="">请选择</option>
+                {detected.filter((c) => c.canRead).map((c) => (
+                  <option key={c.kind} value={c.kind}>
+                    {c.label}{c.sessionCount != null ? `（${c.sessionCount}）` : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <span style={{ fontSize: 16, paddingBottom: 6, opacity: 0.5 }}>→</span>
+            <label style={{ flex: '1 1 200px' }}>
+              目标（写到这里）
+              <select
+                style={{ flex: 1 }}
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+                disabled={!source}
+              >
+                <option value="">{source ? '请选择' : '请先选源'}</option>
+                {targetOptions.filter((c) => c.client !== source).map((c) => (
+                  <option key={c.client} value={c.client}>
+                    {c.label}{c.client === 'dsh' ? '（DSH 主程序）' : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
 
-      {/* 明确显示当前选择 */}
-      {source && (
-        <p style={{ fontSize: 12, margin: '4px 0' }}>
-          {target
-            ? <>将把 <b>{clients.find((c) => c.kind === source)?.label}</b> 的会话转换到 <b>{caps.find((c) => c.client === target)?.label}</b></>
-            : <>已选源端 <b>{clients.find((c) => c.kind === source)?.label}</b>，请选择目标客户端（可选 {targetOptions.filter((c) => c.client !== source).length} 项）</>}
-        </p>
-      )}
+          {/* 当前选择摘要 */}
+          {source && (
+            <div className="cb-row-hint" style={{ marginTop: 2 }}>
+              {target
+                ? <>将把 <b style={{ color: 'var(--cb-text)' }}>{clients.find((c) => c.kind === source)?.label}</b> 的会话转换到 <b style={{ color: 'var(--cb-accent)' }}>{caps.find((c) => c.client === target)?.label}</b></>
+                : <>已选源端 <b style={{ color: 'var(--cb-text)' }}>{clients.find((c) => c.kind === source)?.label}</b>，请选择目标（可选 {targetOptions.filter((c) => c.client !== source).length} 项）</>}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* 损失提示 */}
       {losses.length > 0 && (
         <div className="alert warn">
-          <p><b>⚠️ 转换会丢失以下信息：</b></p>
-          <ul style={{ margin: 0, paddingLeft: 20 }}>{losses.map((l, i) => <li key={i} style={{ fontSize: 12 }}>{l}</li>)}</ul>
+          <p><b>转换会丢失以下信息</b></p>
+          <ul>{losses.map((l, i) => <li key={i}>{l}</li>)}</ul>
         </div>
       )}
 
       {/* 会话列表 */}
-      <div className="filters">
-        <input placeholder="按标题或路径筛选…" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
-        <button onClick={() => { setSessions([]); setSource(source); }}>刷新</button>
-      </div>
-
-      <table className="sessions">
-        <thead>
-          <tr><th style={{ width: 32 }} /><th>标题</th><th>会话 ID</th><th>轮次</th><th>最后更新</th><th>工作目录</th></tr>
-        </thead>
-        <tbody>
-          {visible.length === 0 && (
-            <tr><td colSpan={6} className="muted">该客户端没有可读取的会话</td></tr>
-          )}
-          {visible.map((s) => (
+      <div className="cb-card">
+        <div className="cb-card-head">
+          <span className="cb-card-title">
+            选择会话
+            {visible.length > 0 && <span className="cb-badge">{visible.length}</span>}
+          </span>
+          <button className="cb-btn-ghost cb-btn-sm" onClick={() => { const s = source; setSource(''); setTimeout(() => setSource(s), 0); }}>
+            刷新
+          </button>
+        </div>
+        <div className="cb-card-body" style={{ padding: 0 }}>
+          <div className="filters" style={{ padding: '10px 14px' }}>
+            <input placeholder="按标题或路径筛选…" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
+          </div>
+          <div className="cb-table-wrap" style={{ border: 'none', borderRadius: 0, maxHeight: 320, overflow: 'auto' }}>
+            <table className="sessions">
+              <thead>
+                <tr><th style={{ width: 32 }} /><th>标题</th><th>会话 ID</th><th>轮次</th><th>更新</th></tr>
+              </thead>
+              <tbody>
+                {visible.length === 0 && (
+                  <tr><td colSpan={5} className="muted" style={{ padding: 16 }}>该客户端没有可读取的会话</td></tr>
+                )}
+                {visible.map((s) => (
             <tr key={s.id} className={selected === s.id ? 'checked' : ''} onClick={() => setSelected(s.id)}>
               <td><input type="radio" checked={selected === s.id} onChange={() => setSelected(s.id)} /></td>
               <td title={s.title}>{s.title}</td>
               <td className="path" title={s.id}>…{s.id.slice(-8)}</td>
               <td>{s.turns ?? '—'}</td>
-              <td>{new Date(s.updatedAt).toLocaleString('zh-CN', { hour12: false })}</td>
-              <td className="path" title={s.cwd}>{s.cwd.slice(0, 40)}</td>
+              <td>{new Date(s.updatedAt).toLocaleDateString('zh-CN')}</td>
             </tr>
           ))}
-        </tbody>
-      </table>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-      {/* 上下文预览选项 */}
-      <div className="filters">
-        <label style={{ fontSize: 12 }}>
-          上下文预算：
-          <select value={budget} onChange={(e) => setBudget(Number(e.target.value))}>
-            <option value={200_000}>200k（默认）</option>
-            <option value={128_000}>128k</option>
-            <option value={64_000}>64k</option>
-            <option value={32_000}>32k</option>
-            <option value={16_000}>16k</option>
-          </select>
-        </label>
-        <button disabled={!selected} onClick={doPreview}>预览压缩上下文</button>
+      {/* 上下文预览 */}
+      <div className="cb-card">
+        <div className="cb-card-head">
+          <span className="cb-card-title">上下文预览</span>
+        </div>
+        <div className="cb-card-desc">
+          先把会话压缩成 Markdown 看看效果，再决定是否转换。
+        </div>
+        <div className="cb-card-body">
+          <div className="filters">
+            <label>
+              预算
+              <select value={budget} onChange={(e) => setBudget(Number(e.target.value))}>
+                <option value={200_000}>200k（默认）</option>
+                <option value={128_000}>128k</option>
+                <option value={64_000}>64k</option>
+                <option value={32_000}>32k</option>
+                <option value={16_000}>16k</option>
+              </select>
+            </label>
+            <button disabled={!selected} onClick={doPreview}>预览压缩上下文</button>
+          </div>
+        </div>
       </div>
 
       <div className="dialog-footer">
