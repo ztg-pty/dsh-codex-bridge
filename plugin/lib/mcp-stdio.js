@@ -1679,7 +1679,7 @@ var DshAdapter = class {
 	}
 	async write(session, opts = {}) {
 		const cwd = opts.cwd ?? session.cwd ?? process.cwd();
-		const sessionId = `session-${session.origin.client === "dsh" ? session.origin.originalId : randomId()}`;
+		const sessionId = session.origin.client === "dsh" ? session.origin.originalId : `session-${crypto$1.randomUUID()}`;
 		const events = [];
 		let seq = 0;
 		const push = (type, data, time, extra = {}) => {
@@ -1816,18 +1816,57 @@ var DshAdapter = class {
 			agentPreset: "standard"
 		};
 		const targetDir = path.join(dshSessionsRoot(), projectKey(cwd), encodeSegment(sessionId));
+		const file = await writeDshSessionFile({
+			header,
+			events
+		}, targetDir);
+		const warnings = [];
+		try {
+			await registerToWorkspace(sessionId, cwd);
+			warnings.push("DSH 需要重启后才会在工作区列表看到该会话");
+		} catch (e) {
+			warnings.push(`会话已写入，但注册到工作区失败：${String(e?.message ?? e)}（重启 DSH 后可能仍不可见）`);
+		}
 		return {
 			ok: true,
 			targetId: sessionId,
-			location: await writeDshSessionFile({
-				header,
-				events
-			}, targetDir),
+			location: file,
 			records: events.length,
-			warnings: ["DSH 需要重启后才会在工作区列表看到该会话"]
+			warnings
 		};
 	}
 };
+/**
+* 把新会话注册进 DSH 的 workspace.json。
+*
+* DSH 的会话列表来自 `storages/workspace.json` 的 `tables.workspaces.<id>.sessionIds`，
+* 而不是扫描 sessions 目录。不注册的话，文件在磁盘上但列表看不到。
+*/
+async function registerToWorkspace(sessionId, cwd) {
+	const file = path.join(dshHome(), "storages", "workspace.json");
+	let raw;
+	try {
+		raw = await fsp.readFile(file, "utf8");
+	} catch {
+		return;
+	}
+	const data = JSON.parse(raw);
+	const tables = data?.tables?.workspaces;
+	if (!tables) return;
+	const norm = (p) => p.replace(/\//g, "\\").toLowerCase();
+	const target = norm(cwd);
+	for (const key of Object.keys(tables)) {
+		const ws = tables[key];
+		if (typeof ws?.path !== "string") continue;
+		if (norm(ws.path) !== target) continue;
+		const ids = Array.isArray(ws.sessionIds) ? ws.sessionIds : [];
+		if (ids.includes(sessionId)) return;
+		ws.sessionIds = [sessionId, ...ids];
+		ws.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+		await fsp.writeFile(file, JSON.stringify(data, null, 2) + "\n", "utf8");
+		return;
+	}
+}
 function safeJson$2(s) {
 	if (typeof s !== "string") return s ?? {};
 	try {
@@ -1835,9 +1874,6 @@ function safeJson$2(s) {
 	} catch {
 		return {};
 	}
-}
-function randomId() {
-	return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 const dshAdapter = new DshAdapter();
 //#endregion

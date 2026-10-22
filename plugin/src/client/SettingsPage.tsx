@@ -112,20 +112,32 @@ export function CodexBridgeSettings({ apiBase = '/plugins/dsh-codex-bridge' }: S
       {/* 主操作 */}
       <div className="actions">
         <button className="primary" onClick={() => setView('transfer')}>
-          跨端转换 / 上下文预览
+          跨端转换（五端互通）
         </button>
-        <button className="primary" onClick={() => setView('import')}>
-          导入 Codex 会话
+        <button onClick={() => setView('import')}>
+          导入 Codex 会话到 DSH
         </button>
-        <button className="primary" onClick={() => setView('export')}>
-          导出至 Codex / WorkBuddy
+        <button onClick={() => setView('export')}>
+          导出 DSH 会话到 Codex / WorkBuddy
         </button>
       </div>
 
-      <p className="muted" style={{ fontSize: 12 }}>
-        提示：跨端转换支持 Zcode / Claude Code（UIR 适配器已实现），
-        其余端走专用转换器。转换前会显示损失提示。
-      </p>
+      <div className="alert info" style={{ fontSize: 12, marginTop: 8 }}>
+        <p style={{ margin: 0 }}>
+          <b>怎么选：</b>
+        </p>
+        <ul style={{ margin: '4px 0 0', paddingLeft: 20 }}>
+          <li>
+            <b>任意两端互转</b>（含 Zcode / Claude Code / WorkBuddy → DSH）→ 用「跨端转换」
+          </li>
+          <li>
+            <b>Codex → DSH</b>（带工作区选择、去重、加密占位）→ 用「导入 Codex 会话」
+          </li>
+          <li>
+            <b>DSH → Codex / WorkBuddy</b>（带自动备份、Codex 索引注册）→ 用「导出 DSH 会话」
+          </li>
+        </ul>
+      </div>
 
       <LogPanel apiBase={apiBase} />
     </div>

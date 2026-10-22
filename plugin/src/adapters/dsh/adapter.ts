@@ -17,6 +17,7 @@
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import type {
   SessionAdapter, AdapterCapability, ReadOptions, ReadResult,
   WriteOptions, WriteResult, SessionSummary, UirSession, UirTurn, UirStep, UirBlock,
@@ -247,7 +248,9 @@ export class DshAdapter implements SessionAdapter {
 
   async write(session: UirSession, opts: WriteOptions = {}): Promise<WriteResult> {
     const cwd = opts.cwd ?? session.cwd ?? process.cwd();
-    const sessionId = `session-${session.origin.client === 'dsh' ? session.origin.originalId : randomId()}`;
+    const sessionId = session.origin.client === 'dsh'
+      ? session.origin.originalId
+      : `session-${crypto.randomUUID()}`;
 
     // UIR → DSH v4 事件
     const events: DshEvent[] = [];
@@ -357,14 +360,59 @@ export class DshAdapter implements SessionAdapter {
     const targetDir = path.join(dshSessionsRoot(), projectKey(cwd), encodeSegment(sessionId));
     const file = await writeDshSessionFile({ header, events }, targetDir);
 
+    // ★ 注册到 workspace.json —— 否则 DSH 的会话列表看不到它
+    const warnings: string[] = [];
+    try {
+      await registerToWorkspace(sessionId, cwd);
+      warnings.push('DSH 需要重启后才会在工作区列表看到该会话');
+    } catch (e) {
+      warnings.push(`会话已写入，但注册到工作区失败：${String((e as Error)?.message ?? e)}（重启 DSH 后可能仍不可见）`);
+    }
+
     return {
       ok: true,
       targetId: sessionId,
       location: file,
       records: events.length,
-      warnings: ['DSH 需要重启后才会在工作区列表看到该会话'],
+      warnings,
     };
   }
+}
+
+/**
+ * 把新会话注册进 DSH 的 workspace.json。
+ *
+ * DSH 的会话列表来自 `storages/workspace.json` 的 `tables.workspaces.<id>.sessionIds`，
+ * 而不是扫描 sessions 目录。不注册的话，文件在磁盘上但列表看不到。
+ */
+async function registerToWorkspace(sessionId: string, cwd: string): Promise<void> {
+  const file = path.join(dshHome(), 'storages', 'workspace.json');
+  let raw: string;
+  try {
+    raw = await fsp.readFile(file, 'utf8');
+  } catch {
+    return;   // 没有 workspace.json（未初始化工作区），跳过
+  }
+  const data = JSON.parse(raw);
+  const tables = data?.tables?.workspaces;
+  if (!tables) return;
+
+  const norm = (p: string) => p.replace(/\//g, '\\').toLowerCase();
+  const target = norm(cwd);
+
+  for (const key of Object.keys(tables)) {
+    const ws = tables[key];
+    if (typeof ws?.path !== 'string') continue;
+    if (norm(ws.path) !== target) continue;
+
+    const ids: string[] = Array.isArray(ws.sessionIds) ? ws.sessionIds : [];
+    if (ids.includes(sessionId)) return;
+    ws.sessionIds = [sessionId, ...ids];
+    ws.updatedAt = new Date().toISOString();
+    await fsp.writeFile(file, JSON.stringify(data, null, 2) + '\n', 'utf8');
+    return;
+  }
+  // 目标 cwd 没有对应工作区：DSH 会在下次启动时按 header.cwd 自动归类（若已初始化则不会）
 }
 
 function safeJson(s: unknown): unknown {

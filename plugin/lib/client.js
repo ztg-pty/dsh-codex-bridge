@@ -14,7 +14,7 @@ let react = require("react");
 const jsx5 = react_jsx_runtime["jsx"]; const jsxs5 = react_jsx_runtime["jsxs"];
 const jsx4 = react_jsx_runtime["jsx"]; const jsxs4 = react_jsx_runtime["jsxs"];
 const useCallback4 = react["useCallback"]; const useEffect4 = react["useEffect"]; const useState4 = react["useState"];
-const jsx3 = react_jsx_runtime["jsx"]; const jsxs3 = react_jsx_runtime["jsxs"];
+const Fragment = react_jsx_runtime["Fragment"]; const jsx3 = react_jsx_runtime["jsx"]; const jsxs3 = react_jsx_runtime["jsxs"];
 const useCallback3 = react["useCallback"]; const useEffect3 = react["useEffect"]; const useMemo3 = react["useMemo"]; const useState3 = react["useState"];
 const jsx2 = react_jsx_runtime["jsx"]; const jsxs2 = react_jsx_runtime["jsxs"];
 const useCallback2 = react["useCallback"]; const useEffect2 = react["useEffect"]; const useMemo2 = react["useMemo"]; const useState2 = react["useState"];
@@ -920,25 +920,45 @@ function TransferDialog({ apiBase, onBack }) {
         c.sessionCount != null ? ` \xB7 ${c.sessionCount}` : ""
       ] }, c.kind))
     ] }),
-    /* @__PURE__ */ jsxs3("div", { className: "filters", style: { gap: 16 }, children: [
+    /* @__PURE__ */ jsxs3("div", { className: "filters", style: { gap: 16, alignItems: "flex-end" }, children: [
       /* @__PURE__ */ jsxs3("label", { children: [
-        "\u6E90\u5BA2\u6237\u7AEF\uFF1A",
+        "\u6E90\u5BA2\u6237\u7AEF\uFF08\u4ECE\u8FD9\u91CC\u8BFB\uFF09\uFF1A",
         /* @__PURE__ */ jsxs3("select", { value: source, onChange: (e) => {
           setSource(e.target.value);
           setSelected("");
+          setTarget("");
         }, children: [
           /* @__PURE__ */ jsx3("option", { value: "", children: "\u8BF7\u9009\u62E9" }),
-          detected.filter((c) => c.canRead).map((c) => /* @__PURE__ */ jsx3("option", { value: c.kind, children: c.label }, c.kind))
+          detected.filter((c) => c.canRead).map((c) => /* @__PURE__ */ jsxs3("option", { value: c.kind, children: [
+            c.label,
+            c.sessionCount != null ? `\uFF08${c.sessionCount} \u4E2A\u4F1A\u8BDD\uFF09` : ""
+          ] }, c.kind))
         ] })
       ] }),
+      /* @__PURE__ */ jsx3("span", { style: { fontSize: 18, padding: "0 4px" }, children: "\u2192" }),
       /* @__PURE__ */ jsxs3("label", { children: [
-        "\u76EE\u6807\u5BA2\u6237\u7AEF\uFF1A",
-        /* @__PURE__ */ jsxs3("select", { value: target, onChange: (e) => setTarget(e.target.value), children: [
-          /* @__PURE__ */ jsx3("option", { value: "", children: "\u8BF7\u9009\u62E9" }),
-          targetOptions.filter((c) => c.client !== source).map((c) => /* @__PURE__ */ jsx3("option", { value: c.client, children: c.label }, c.client))
+        "\u76EE\u6807\u5BA2\u6237\u7AEF\uFF08\u5199\u5230\u8FD9\u91CC\uFF09\uFF1A",
+        /* @__PURE__ */ jsxs3("select", { value: target, onChange: (e) => setTarget(e.target.value), disabled: !source, children: [
+          /* @__PURE__ */ jsx3("option", { value: "", children: source ? "\u8BF7\u9009\u62E9" : "\u8BF7\u5148\u9009\u6E90\u5BA2\u6237\u7AEF" }),
+          targetOptions.filter((c) => c.client !== source).map((c) => /* @__PURE__ */ jsxs3("option", { value: c.client, children: [
+            c.label,
+            c.client === "dsh" ? "\uFF08DSH \u4E3B\u7A0B\u5E8F\uFF09" : ""
+          ] }, c.client))
         ] })
       ] })
     ] }),
+    source && /* @__PURE__ */ jsx3("p", { style: { fontSize: 12, margin: "4px 0" }, children: target ? /* @__PURE__ */ jsxs3(Fragment, { children: [
+      "\u5C06\u628A ",
+      /* @__PURE__ */ jsx3("b", { children: clients.find((c) => c.kind === source)?.label }),
+      " \u7684\u4F1A\u8BDD\u8F6C\u6362\u5230 ",
+      /* @__PURE__ */ jsx3("b", { children: caps.find((c) => c.client === target)?.label })
+    ] }) : /* @__PURE__ */ jsxs3(Fragment, { children: [
+      "\u5DF2\u9009\u6E90\u7AEF ",
+      /* @__PURE__ */ jsx3("b", { children: clients.find((c) => c.kind === source)?.label }),
+      "\uFF0C\u8BF7\u9009\u62E9\u76EE\u6807\u5BA2\u6237\u7AEF\uFF08\u53EF\u9009 ",
+      targetOptions.filter((c) => c.client !== source).length,
+      " \u9879\uFF09"
+    ] }) }),
     losses.length > 0 && /* @__PURE__ */ jsxs3("div", { className: "alert warn", children: [
       /* @__PURE__ */ jsx3("p", { children: /* @__PURE__ */ jsx3("b", { children: "\u26A0\uFE0F \u8F6C\u6362\u4F1A\u4E22\u5931\u4EE5\u4E0B\u4FE1\u606F\uFF1A" }) }),
       /* @__PURE__ */ jsx3("ul", { style: { margin: 0, paddingLeft: 20 }, children: losses.map((l, i) => /* @__PURE__ */ jsx3("li", { style: { fontSize: 12 }, children: l }, i)) })
@@ -1135,11 +1155,27 @@ function CodexBridgeSettings({ apiBase = "/plugins/dsh-codex-bridge" }) {
       /* @__PURE__ */ jsx5("dd", { children: status.dshSessionsRoot })
     ] }),
     /* @__PURE__ */ jsxs5("div", { className: "actions", children: [
-      /* @__PURE__ */ jsx5("button", { className: "primary", onClick: () => setView("transfer"), children: "\u8DE8\u7AEF\u8F6C\u6362 / \u4E0A\u4E0B\u6587\u9884\u89C8" }),
-      /* @__PURE__ */ jsx5("button", { className: "primary", onClick: () => setView("import"), children: "\u5BFC\u5165 Codex \u4F1A\u8BDD" }),
-      /* @__PURE__ */ jsx5("button", { className: "primary", onClick: () => setView("export"), children: "\u5BFC\u51FA\u81F3 Codex / WorkBuddy" })
+      /* @__PURE__ */ jsx5("button", { className: "primary", onClick: () => setView("transfer"), children: "\u8DE8\u7AEF\u8F6C\u6362\uFF08\u4E94\u7AEF\u4E92\u901A\uFF09" }),
+      /* @__PURE__ */ jsx5("button", { onClick: () => setView("import"), children: "\u5BFC\u5165 Codex \u4F1A\u8BDD\u5230 DSH" }),
+      /* @__PURE__ */ jsx5("button", { onClick: () => setView("export"), children: "\u5BFC\u51FA DSH \u4F1A\u8BDD\u5230 Codex / WorkBuddy" })
     ] }),
-    /* @__PURE__ */ jsx5("p", { className: "muted", style: { fontSize: 12 }, children: "\u63D0\u793A\uFF1A\u8DE8\u7AEF\u8F6C\u6362\u652F\u6301 Zcode / Claude Code\uFF08UIR \u9002\u914D\u5668\u5DF2\u5B9E\u73B0\uFF09\uFF0C \u5176\u4F59\u7AEF\u8D70\u4E13\u7528\u8F6C\u6362\u5668\u3002\u8F6C\u6362\u524D\u4F1A\u663E\u793A\u635F\u5931\u63D0\u793A\u3002" }),
+    /* @__PURE__ */ jsxs5("div", { className: "alert info", style: { fontSize: 12, marginTop: 8 }, children: [
+      /* @__PURE__ */ jsx5("p", { style: { margin: 0 }, children: /* @__PURE__ */ jsx5("b", { children: "\u600E\u4E48\u9009\uFF1A" }) }),
+      /* @__PURE__ */ jsxs5("ul", { style: { margin: "4px 0 0", paddingLeft: 20 }, children: [
+        /* @__PURE__ */ jsxs5("li", { children: [
+          /* @__PURE__ */ jsx5("b", { children: "\u4EFB\u610F\u4E24\u7AEF\u4E92\u8F6C" }),
+          "\uFF08\u542B Zcode / Claude Code / WorkBuddy \u2192 DSH\uFF09\u2192 \u7528\u300C\u8DE8\u7AEF\u8F6C\u6362\u300D"
+        ] }),
+        /* @__PURE__ */ jsxs5("li", { children: [
+          /* @__PURE__ */ jsx5("b", { children: "Codex \u2192 DSH" }),
+          "\uFF08\u5E26\u5DE5\u4F5C\u533A\u9009\u62E9\u3001\u53BB\u91CD\u3001\u52A0\u5BC6\u5360\u4F4D\uFF09\u2192 \u7528\u300C\u5BFC\u5165 Codex \u4F1A\u8BDD\u300D"
+        ] }),
+        /* @__PURE__ */ jsxs5("li", { children: [
+          /* @__PURE__ */ jsx5("b", { children: "DSH \u2192 Codex / WorkBuddy" }),
+          "\uFF08\u5E26\u81EA\u52A8\u5907\u4EFD\u3001Codex \u7D22\u5F15\u6CE8\u518C\uFF09\u2192 \u7528\u300C\u5BFC\u51FA DSH \u4F1A\u8BDD\u300D"
+        ] })
+      ] })
+    ] }),
     /* @__PURE__ */ jsx5(LogPanel, { apiBase })
   ] });
 }

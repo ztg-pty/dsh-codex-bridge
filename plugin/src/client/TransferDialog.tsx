@@ -289,26 +289,40 @@ export function TransferDialog({ apiBase, onBack }: Props) {
       </div>
 
       {/* 源 / 目标选择 */}
-      <div className="filters" style={{ gap: 16 }}>
+      <div className="filters" style={{ gap: 16, alignItems: 'flex-end' }}>
         <label>
-          源客户端：
-          <select value={source} onChange={(e) => { setSource(e.target.value); setSelected(''); }}>
+          源客户端（从这里读）：
+          <select value={source} onChange={(e) => { setSource(e.target.value); setSelected(''); setTarget(''); }}>
             <option value="">请选择</option>
             {detected.filter((c) => c.canRead).map((c) => (
-              <option key={c.kind} value={c.kind}>{c.label}</option>
+              <option key={c.kind} value={c.kind}>
+                {c.label}{c.sessionCount != null ? `（${c.sessionCount} 个会话）` : ''}
+              </option>
             ))}
           </select>
         </label>
+        <span style={{ fontSize: 18, padding: '0 4px' }}>→</span>
         <label>
-          目标客户端：
-          <select value={target} onChange={(e) => setTarget(e.target.value)}>
-            <option value="">请选择</option>
+          目标客户端（写到这里）：
+          <select value={target} onChange={(e) => setTarget(e.target.value)} disabled={!source}>
+            <option value="">{source ? '请选择' : '请先选源客户端'}</option>
             {targetOptions.filter((c) => c.client !== source).map((c) => (
-              <option key={c.client} value={c.client}>{c.label}</option>
+              <option key={c.client} value={c.client}>
+                {c.label}{c.client === 'dsh' ? '（DSH 主程序）' : ''}
+              </option>
             ))}
           </select>
         </label>
       </div>
+
+      {/* 明确显示当前选择 */}
+      {source && (
+        <p style={{ fontSize: 12, margin: '4px 0' }}>
+          {target
+            ? <>将把 <b>{clients.find((c) => c.kind === source)?.label}</b> 的会话转换到 <b>{caps.find((c) => c.client === target)?.label}</b></>
+            : <>已选源端 <b>{clients.find((c) => c.kind === source)?.label}</b>，请选择目标客户端（可选 {targetOptions.filter((c) => c.client !== source).length} 项）</>}
+        </p>
+      )}
 
       {/* 损失提示 */}
       {losses.length > 0 && (
