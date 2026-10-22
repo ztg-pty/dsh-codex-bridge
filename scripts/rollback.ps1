@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   卸载 / 回滚 dsh-codex-bridge
 

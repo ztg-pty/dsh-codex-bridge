@@ -49,13 +49,28 @@ WorkBuddy ─┘                    └── WorkBuddy
 | Node.js | `^22.19.0` 或 `>=24`（需要内置 `node:sqlite`） |
 | 系统 | Windows（路径编码逻辑已实测；macOS/Linux 兼容但未真机验证） |
 
-### 方式一：脚本安装（推荐）
+### 方式一：一键安装（推荐）
 
 ```powershell
 git clone https://github.com/ztg-pty/dsh-codex-bridge.git
 cd dsh-codex-bridge
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 ```
+
+**无需构建**：`plugin/lib/` 已包含编译好的产物（`index.js` / `client.js` / `mcp-stdio.js`），
+clone 下来直接就能装。
+
+脚本会自动：
+1. 备份 profile 原有配置（可用 `scripts/rollback.ps1` 回滚）
+2. 复制插件到 `<profile>/node_modules/dsh-codex-bridge`
+3. 登记到 profile 的 `dependencies` 与 `dsh.bundles`
+4. 提示重启 DSH
+
+> 如果 DSH profile 不在默认位置，可用环境变量指定：
+> ```powershell
+> $env:DSH_PROFILE_DIR = "D:\path\to\profile"
+> powershell -ExecutionPolicy Bypass -File scripts/install.ps1
+> ```
 
 ### 方式二：手动安装
 
@@ -64,6 +79,20 @@ powershell -ExecutionPolicy Bypass -File scripts/install.ps1
    - `dependencies` 加 `"dsh-codex-bridge": "file:<路径>/plugin"`
    - `dsh.bundles` 加 `"dsh-codex-bridge"`
 3. **重启 DSH**
+
+### 验证安装
+
+```bash
+node --experimental-strip-types --import ./scripts/ts-register.mjs scripts/acceptance.mjs
+```
+
+会自检 29 项（UI / 五端适配器 / MCP / 可移植性 / 构建部署 / 中文错误），全部通过即安装成功。
+
+### 卸载 / 回滚
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/rollback.ps1
+```
 
 ---
 

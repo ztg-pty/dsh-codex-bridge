@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   安装 dsh-codex-bridge 到 DSH desktop profile
 
@@ -13,6 +13,12 @@
 #>
 
 $ErrorActionPreference = 'Stop'
+
+# 强制 UTF-8 输出，避免中文在旧控制台下乱码
+try {
+  [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+  $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+} catch { }
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $PluginDir = Join-Path $RepoRoot 'plugin'
@@ -115,7 +121,7 @@ Write-Host '=== 安装完成 ===' -ForegroundColor Cyan
 Write-Host ''
 Write-Host '下一步：' -ForegroundColor Yellow
 Write-Host '  1. 完全退出 DSH 并重新启动'
-Write-Host '  2. 打开 插件 → 找到「Codex 会话桥接」'
+Write-Host '  2. 打开 插件，找到 [会话桥接]'
 Write-Host ''
 Write-Host "如需回滚: powershell -ExecutionPolicy Bypass -File scripts/rollback.ps1 -BackupDir `"$BackupDir`"" -ForegroundColor DarkGray
 Write-Host ''
