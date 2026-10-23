@@ -168,24 +168,53 @@ GET  http://127.0.0.1:<DSH端口>/plugins/dsh-codex-bridge/mcp/tools   （调试
 |---|---|
 | `list_clients` | 列出可用客户端与能力矩阵 |
 | `list_sessions` | 列会话（可按客户端/目录/关键字过滤） |
-| `get_context` | **核心**：取压缩上下文（默认 200k 预算） |
+| `get_context` | **核心**：取压缩上下文（支持 `model` 自动定预算 / `budget` 显式指定） |
 | `push_context` | 把当前对话写入目标端 |
 | `transfer_session` | 端到端直接转换 |
 | `summarize_session` | 只生成摘要 |
+| `list_models` | 列出内置的模型上下文长度预设（31 个） |
 
 **典型用法**（在 Claude Code / Cursor 里说）：
 
 > 「把 DSH 里『城市地图系统』那个会话的上下文拉进来」
 > → 客户端调 `list_sessions` → `get_context`
 
+> 「用 Gemini 的窗口拉，能装多少装多少」
+> → `get_context({ client: 'dsh', sessionId: 'xxx', model: 'gemini-1.5-pro' })` → 1.84M 预算
+
+> 「只给我 32k 的摘要版」
+> → `get_context({ ..., budget: 32000 })`
+
 > 「把这段对话存到 Zcode」
 > → 客户端调 `push_context({ target: 'zcode', messages: [...] })`
+
+### 四、上下文长度如何指定
+
+预算解析优先级：**显式 `budget` > `model` 预设 > 默认 200k**，硬上限 2M。
+
+| 模型 | 上下文窗口 | 实际可用（×92%） |
+|---|---|---|
+| Claude Sonnet 4 / Opus 4 | 200,000 | 184,000 |
+| GPT-5 | 400,000 | 368,000 |
+| GPT-4.1 | 1,000,000 | 920,000 |
+| GPT-4o | 128,000 | 117,760 |
+| Gemini 1.5 Pro | 2,000,000 | 1,840,000 |
+| Gemini 2.x | 1,000,000 | 920,000 |
+| DeepSeek V4 | 256,000 | 235,520 |
+| DeepSeek V3 | 128,000 | 117,760 |
+| GLM-5 / GLM-4.6 | 200,000 | 184,000 |
+| Kimi K2 | 256,000 | 235,520 |
+| Qwen | 128,000 | 117,760 |
+
+完整列表（31 个）用 `list_models` 查，或直接读 `plugin/src/budget/tokens.ts` 的 `MODEL_CONTEXT_PRESETS`。
+
+**DSH 插件 UI 里**：导出对话框有「上下文长度」卡片（默认不裁剪，勾选后可选模型或自定义 token），跨端转换对话框同样支持。
 
 ---
 
 ## 上下文压缩（核心能力）
 
-**目标**：返还近乎完整的信息，但不超过 200k token；技术细节不丢失。
+**目标**：在模型上下文窗口内返还近乎完整的信息；技术细节不丢失。
 
 ### 四级流水线
 
@@ -211,7 +240,7 @@ L3 骨架   → 早期轮次折叠成摘要句
 
 ### 实测数据（真实会话）
 
-会话「Blender 写实城市建模」（**133 万 tokens**，44 轮）压缩到 200k 预算：
+会话「Blender 写实城市建模」（**133 万 tokens**，44 轮）压缩到 200k 预算（模型未指定时的默认值）：
 
 ```
 预算利用率    99.9%（182,712 / 184,000）
@@ -258,7 +287,7 @@ dsh-codex-bridge/
 │   │   │   └── summarize.ts
 │   │   ├── mcp/                 # MCP Server
 │   │   │   ├── protocol.ts      # JSON-RPC 2.0 + MCP 方法
-│   │   │   ├── tools.ts         # 6 个工具
+│   │   │   ├── tools.ts         # 7 个工具
 │   │   │   └── stdio-entry.ts   # stdio 入口
 │   │   ├── client/              # React UI
 │   │   ├── host/                # 路由、日志、客户端探测
