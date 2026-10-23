@@ -3517,13 +3517,222 @@ function estimateTokensHeuristic(text) {
 function estimateTokens(text) {
 	return estimateTokensHeuristic(text);
 }
-/** 安全余量：200k 预算按 92% 使用 */
+/** 安全余量：预算按 92% 使用（留出客户端包装开销） */
 const BUDGET_SAFETY_RATIO = .92;
-/** 默认预算 */
+/** 默认预算（未指定模型/预算时） */
 const DEFAULT_BUDGET = 2e5;
-/** 计算实际可用预算 */
-function effectiveBudget(requested) {
-	return Math.floor(Math.min(Math.max(requested ?? 2e5, 1), DEFAULT_BUDGET) * BUDGET_SAFETY_RATIO);
+/** 硬上限：允许的最大预算（2M，覆盖 Gemini 1.5 Pro 等） */
+const MAX_BUDGET = 2e6;
+/**
+* 模型上下文长度预设表。
+*
+* 键为小写匹配片段（按顺序匹配，先具体后通用）。
+* 数值为**模型总上下文窗口**（不是可用输出），预算会再乘安全系数。
+*/
+const MODEL_CONTEXT_PRESETS = [
+	{
+		match: "claude-opus-4",
+		context: 2e5,
+		label: "Claude Opus 4"
+	},
+	{
+		match: "claude-sonnet-4",
+		context: 2e5,
+		label: "Claude Sonnet 4"
+	},
+	{
+		match: "claude-3-7",
+		context: 2e5,
+		label: "Claude 3.7"
+	},
+	{
+		match: "claude-3-5",
+		context: 2e5,
+		label: "Claude 3.5"
+	},
+	{
+		match: "claude",
+		context: 2e5,
+		label: "Claude"
+	},
+	{
+		match: "gpt-5",
+		context: 4e5,
+		label: "GPT-5"
+	},
+	{
+		match: "gpt-4.1",
+		context: 1e6,
+		label: "GPT-4.1"
+	},
+	{
+		match: "gpt-4o",
+		context: 128e3,
+		label: "GPT-4o"
+	},
+	{
+		match: "gpt-4-turbo",
+		context: 128e3,
+		label: "GPT-4 Turbo"
+	},
+	{
+		match: "gpt-4",
+		context: 128e3,
+		label: "GPT-4"
+	},
+	{
+		match: "o1",
+		context: 2e5,
+		label: "o1"
+	},
+	{
+		match: "o3",
+		context: 2e5,
+		label: "o3"
+	},
+	{
+		match: "gemini-2",
+		context: 1e6,
+		label: "Gemini 2"
+	},
+	{
+		match: "gemini-1.5-pro",
+		context: 2e6,
+		label: "Gemini 1.5 Pro"
+	},
+	{
+		match: "gemini",
+		context: 1e6,
+		label: "Gemini"
+	},
+	{
+		match: "deepseek-v4",
+		context: 256e3,
+		label: "DeepSeek V4"
+	},
+	{
+		match: "deepseek-v3",
+		context: 128e3,
+		label: "DeepSeek V3"
+	},
+	{
+		match: "deepseek",
+		context: 128e3,
+		label: "DeepSeek"
+	},
+	{
+		match: "glm-5",
+		context: 2e5,
+		label: "GLM-5"
+	},
+	{
+		match: "glm-4.6",
+		context: 2e5,
+		label: "GLM-4.6"
+	},
+	{
+		match: "glm-4",
+		context: 128e3,
+		label: "GLM-4"
+	},
+	{
+		match: "glm",
+		context: 128e3,
+		label: "GLM"
+	},
+	{
+		match: "kimi-k2",
+		context: 256e3,
+		label: "Kimi K2"
+	},
+	{
+		match: "kimi",
+		context: 128e3,
+		label: "Kimi"
+	},
+	{
+		match: "qwen",
+		context: 128e3,
+		label: "Qwen"
+	},
+	{
+		match: "minimax",
+		context: 2e5,
+		label: "MiniMax"
+	},
+	{
+		match: "doubao",
+		context: 128e3,
+		label: "豆包"
+	},
+	{
+		match: "hunyuan",
+		context: 128e3,
+		label: "混元"
+	},
+	{
+		match: "yi-",
+		context: 2e5,
+		label: "Yi"
+	},
+	{
+		match: "llama",
+		context: 128e3,
+		label: "Llama"
+	},
+	{
+		match: "mistral",
+		context: 128e3,
+		label: "Mistral"
+	}
+];
+/** 按模型名查上下文长度（未匹配返回 undefined） */
+function contextForModel(model) {
+	if (!model) return void 0;
+	const m = model.toLowerCase();
+	for (const p of MODEL_CONTEXT_PRESETS) if (m.includes(p.match)) return {
+		context: p.context,
+		label: p.label
+	};
+}
+/**
+* 解析预算。
+*
+* 优先级：显式 budget > 模型预设 > 默认 200k
+* 上限：MAX_BUDGET
+*/
+function resolveBudget(opts = {}) {
+	let requested;
+	let source;
+	let modelPreset;
+	if (opts.budget != null && Number.isFinite(opts.budget) && opts.budget > 0) {
+		requested = Math.floor(opts.budget);
+		source = "explicit";
+	} else {
+		const preset = contextForModel(opts.model);
+		if (preset) {
+			requested = preset.context;
+			modelPreset = preset;
+			source = "model";
+		} else {
+			requested = DEFAULT_BUDGET;
+			source = "default";
+		}
+	}
+	let clamped = false;
+	if (requested > 2e6) {
+		requested = MAX_BUDGET;
+		clamped = true;
+		source = "clamped";
+	}
+	if (requested < 1) requested = 1;
+	return {
+		requested,
+		effective: Math.floor(requested * BUDGET_SAFETY_RATIO),
+		source,
+		modelPreset,
+		clamped
+	};
 }
 //#endregion
 //#region src/budget/summarize.ts
@@ -3566,9 +3775,15 @@ function extractProtected(text) {
 }
 /**
 * 把 UIR 会话压缩成不超过预算的上下文文本。
+*
+* 预算来源优先级：opts.budget > opts.model 预设 > 默认 200k
 */
 function summarizeSession(session, opts = {}) {
-	const budget = effectiveBudget(opts.budget);
+	const budgetInfo = resolveBudget({
+		budget: opts.budget,
+		model: opts.model
+	});
+	const budget = budgetInfo.effective;
 	const fidelity = opts.fidelity ?? "balanced";
 	const stats = {
 		originalTokens: 0,
@@ -3599,7 +3814,8 @@ function summarizeSession(session, opts = {}) {
 		return {
 			context: originalText + "\n\n（无对话内容）",
 			outline: [],
-			stats
+			stats,
+			budget: budgetInfo
 		};
 	}
 	if (stats.originalTokens <= budget || fidelity === "full" && stats.originalTokens <= budget * 1.05) {
@@ -3608,7 +3824,8 @@ function summarizeSession(session, opts = {}) {
 		return {
 			context: originalText,
 			outline: buildOutline(session),
-			stats
+			stats,
+			budget: budgetInfo
 		};
 	}
 	const l1 = applyL1(session, stats);
@@ -3622,7 +3839,8 @@ function summarizeSession(session, opts = {}) {
 		return {
 			context: l1Text,
 			outline: buildOutline(l1),
-			stats
+			stats,
+			budget: budgetInfo
 		};
 	}
 	const { context, level } = applyL2L3(l1, budget, fidelity, opts.focus ?? [], stats);
@@ -3633,7 +3851,8 @@ function summarizeSession(session, opts = {}) {
 	return {
 		context,
 		outline: buildOutline(session),
-		stats
+		stats,
+		budget: budgetInfo
 	};
 }
 function finishRatio(stats) {
@@ -4224,7 +4443,7 @@ function registerTools(server) {
 	});
 	server.tool({
 		name: "get_context",
-		description: "获取指定会话的上下文，自动压缩到 token 预算内（默认 200k，硬上限 200k）。技术细节（代码块、命令、路径、报错、参数）优先保留，超出预算时早期轮次折叠为摘要。",
+		description: "获取指定会话的上下文，自动压缩到 token 预算内。预算可由 `model`（按模型上下文窗口自动定）或 `budget`（显式 token 数）指定，默认 200k。技术细节（代码块、命令、路径、报错、参数）优先保留，超出预算时早期轮次折叠为摘要。",
 		inputSchema: {
 			type: "object",
 			properties: {
@@ -4236,9 +4455,13 @@ function registerTools(server) {
 					type: "string",
 					description: "会话 ID（必填）"
 				},
+				model: {
+					type: "string",
+					description: "模型名（可选）。按模型上下文窗口自动定预算，如 claude-sonnet-4-5→200k、gpt-4.1→1M、gemini-1.5-pro→2M、deepseek-v4→256k、glm-5→200k。与 budget 同时传时 budget 优先。"
+				},
 				budget: {
 					type: "number",
-					description: "token 预算，默认 200000，上限 200000"
+					description: "显式 token 预算（可选，优先级最高，上限 2M）"
 				},
 				fidelity: {
 					type: "string",
@@ -4261,16 +4484,23 @@ function registerTools(server) {
 		const client = assertClient(args.client, "client");
 		const sessionId = String(args.sessionId ?? "");
 		if (!sessionId) throw new Error("sessionId 不能为空");
-		const budget = Number(args.budget ?? 2e5);
+		const model = args.model ? String(args.model) : void 0;
+		const budgetArg = args.budget != null ? Number(args.budget) : void 0;
+		const budgetInfo = resolveBudget({
+			budget: budgetArg,
+			model
+		});
 		const read = await readSession(client, sessionId);
 		const sum = summarizeSession(read.session, {
-			budget,
+			budget: budgetArg,
+			model,
 			fidelity: args.fidelity,
 			focus: Array.isArray(args.focus) ? args.focus.map(String) : void 0
 		});
+		const sourceText = budgetInfo.source === "model" ? `模型 ${model} → ${budgetInfo.modelPreset?.label ?? "预设"} ${budgetInfo.modelPreset?.context ?? budgetInfo.requested}` : budgetInfo.source === "explicit" ? `显式指定 ${budgetInfo.requested}` : budgetInfo.source === "clamped" ? `已裁剪到上限 ${budgetInfo.requested}` : `默认 ${budgetInfo.requested}`;
 		return textResult([
 			`<!-- 会话上下文：${read.session.title} -->`,
-			`<!-- 来源 ${client} · ${read.session.turns.length} 轮 · 预算 ${budget}（有效 ${effectiveBudget(budget)}） -->`,
+			`<!-- 来源 ${client} · ${read.session.turns.length} 轮 · 预算 ${budgetInfo.effective}（${sourceText}，安全系数 92%） -->`,
 			`<!-- ${formatStats(sum.stats).replace(/\n/g, " | ")} -->`,
 			""
 		].join("\n") + sum.context);
@@ -4418,6 +4648,10 @@ function registerTools(server) {
 				budget: {
 					type: "number",
 					description: "摘要目标 token，默认 8000"
+				},
+				model: {
+					type: "string",
+					description: "模型名（可选，用于自动定预算；显式 budget 优先）"
 				}
 			},
 			required: ["client", "sessionId"]
@@ -4426,10 +4660,12 @@ function registerTools(server) {
 		const client = assertClient(args.client, "client");
 		const sessionId = String(args.sessionId ?? "");
 		if (!sessionId) throw new Error("sessionId 不能为空");
-		const budget = Number(args.budget ?? 8e3);
+		const budget = args.budget != null ? Number(args.budget) : 8e3;
+		const model = args.model ? String(args.model) : void 0;
 		const read = await readSession(client, sessionId);
 		const sum = summarizeSession(read.session, {
 			budget,
+			model,
 			fidelity: "compact"
 		});
 		const lines = [
@@ -4448,6 +4684,37 @@ function registerTools(server) {
 			lines.push(`- **第 ${o.turn} 轮**：${o.intent || "（无明确意图）"}${files}${tools}`);
 		}
 		lines.push("", "## 压缩上下文", "", sum.context);
+		return textResult(lines.join("\n"));
+	});
+	server.tool({
+		name: "list_models",
+		description: "列出内置的模型上下文长度预设。调用 get_context 时可传 model 名自动定预算，也可直接传 budget（显式 token 数，优先级更高）。",
+		inputSchema: {
+			type: "object",
+			properties: { query: {
+				type: "string",
+				description: "按名称过滤（可选）"
+			} }
+		}
+	}, async (args) => {
+		const q = args.query ? String(args.query).toLowerCase() : "";
+		const rows = MODEL_CONTEXT_PRESETS.filter((p) => !q || p.match.includes(q) || p.label.toLowerCase().includes(q));
+		const lines = [
+			"# 模型上下文长度预设",
+			"",
+			`默认预算：${DEFAULT_BUDGET.toLocaleString()} tokens（未指定 model / budget 时）`,
+			`安全系数：92%（实际可用 = 上下文 × 0.92）`,
+			`硬上限：2,000,000 tokens`,
+			"",
+			"| 匹配片段 | 上下文窗口 | 实际可用 | 模型 |",
+			"|---|---|---|---|"
+		];
+		for (const p of rows) lines.push(`| \`${p.match}\` | ${p.context.toLocaleString()} | ${Math.floor(p.context * .92).toLocaleString()} | ${p.label} |`);
+		lines.push("");
+		lines.push("用法示例：");
+		lines.push("- `get_context({ client, sessionId, model: \"claude-sonnet-4-5\" })` → 按 200k 预算");
+		lines.push("- `get_context({ client, sessionId, budget: 500000 })` → 显式 500k");
+		lines.push("- 两者同时传时，`budget` 优先");
 		return textResult(lines.join("\n"));
 	});
 }

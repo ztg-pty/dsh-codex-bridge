@@ -8,6 +8,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatBytes } from '../shared/errors';
+import { BudgetPicker, DEFAULT_BUDGET_VALUE, resolveDisplayBudget, type BudgetValue } from './BudgetPicker';
 
 type Phase = 'loading' | 'pick' | 'confirm' | 'running' | 'done' | 'preview' | 'error';
 
@@ -66,7 +67,7 @@ export function TransferDialog({ apiBase, onBack }: Props) {
   const [losses, setLosses] = useState<string[]>([]);
   const [result, setResult] = useState<any>(null);
   const [preview, setPreview] = useState<any>(null);
-  const [budget, setBudget] = useState(200_000);
+  const [budgetValue, setBudgetValue] = useState<BudgetValue>(DEFAULT_BUDGET_VALUE);
 
   // 加载客户端状态
   const loadClients = useCallback(async () => {
@@ -155,10 +156,13 @@ export function TransferDialog({ apiBase, onBack }: Props) {
     setPhase('running');
     setError(null);
     try {
+      const body: Record<string, unknown> = { client: source, sessionId: selected };
+      if (budgetValue.mode === 'custom') body.budget = budgetValue.custom;
+      else if (budgetValue.model) body.model = budgetValue.model;
       const r = await fetch(`${apiBase}/context/preview`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ client: source, sessionId: selected, budget }),
+        body: JSON.stringify(body),
       });
       const d = await r.json();
       if (!d.ok) throw new Error(d.message ?? '预览失败');
@@ -395,17 +399,12 @@ export function TransferDialog({ apiBase, onBack }: Props) {
           先把会话压缩成 Markdown 看看效果，再决定是否转换。
         </div>
         <div className="cb-card-body">
+          <BudgetPicker
+            value={budgetValue}
+            onChange={setBudgetValue}
+            disabled={!selected}
+          />
           <div className="filters">
-            <label>
-              预算
-              <select value={budget} onChange={(e) => setBudget(Number(e.target.value))}>
-                <option value={200_000}>200k（默认）</option>
-                <option value={128_000}>128k</option>
-                <option value={64_000}>64k</option>
-                <option value={32_000}>32k</option>
-                <option value={16_000}>16k</option>
-              </select>
-            </label>
             <button disabled={!selected} onClick={doPreview}>预览压缩上下文</button>
           </div>
         </div>

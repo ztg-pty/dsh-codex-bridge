@@ -15,7 +15,7 @@ import {
   readSession, writeSession, transferSession, describeLoss,
 } from '../adapters/registry.js';
 import { summarizeSession, formatStats } from '../budget/summarize.js';
-import { effectiveBudget, DEFAULT_BUDGET } from '../budget/tokens.js';
+import { resolveBudget, DEFAULT_BUDGET, MODEL_CONTEXT_PRESETS } from '../budget/tokens.js';
 import { probeAllClients, platformSupport } from '../host/clients.js';
 import type { ClientKind, UirSession, UirTurn, UirStep } from '../uir/types.js';
 
@@ -165,14 +165,21 @@ export function registerTools(server: McpServer): void {
     {
       name: 'get_context',
       description:
-        '获取指定会话的上下文，自动压缩到 token 预算内（默认 200k，硬上限 200k）。'
+        '获取指定会话的上下文，自动压缩到 token 预算内。'
+        + '预算可由 `model`（按模型上下文窗口自动定）或 `budget`（显式 token 数）指定，默认 200k。'
         + '技术细节（代码块、命令、路径、报错、参数）优先保留，超出预算时早期轮次折叠为摘要。',
       inputSchema: {
         type: 'object',
         properties: {
           client: { type: 'string', description: '客户端类型（必填）' },
           sessionId: { type: 'string', description: '会话 ID（必填）' },
-          budget: { type: 'number', description: 'token 预算，默认 200000，上限 200000' },
+          model: {
+            type: 'string',
+            description: '模型名（可选）。按模型上下文窗口自动定预算，'
+              + '如 claude-sonnet-4-5→200k、gpt-4.1→1M、gemini-1.5-pro→2M、deepseek-v4→256k、glm-5→200k。'
+              + '与 budget 同时传时 budget 优先。',
+          },
+          budget: { type: 'number', description: '显式 token 预算（可选，优先级最高，上限 2M）' },
           fidelity: { type: 'string', enum: ['full', 'balanced', 'compact'], description: '保真度，默认 balanced' },
           focus: { type: 'array', items: { type: 'string' }, description: '关注点关键字（提升匹配内容保留优先级）' },
         },
@@ -184,17 +191,30 @@ export function registerTools(server: McpServer): void {
       const sessionId = String(args.sessionId ?? '');
       if (!sessionId) throw new Error('sessionId 不能为空');
 
-      const budget = Number(args.budget ?? DEFAULT_BUDGET);
+      const model = args.model ? String(args.model) : undefined;
+      const budgetArg = args.budget != null ? Number(args.budget) : undefined;
+      const budgetInfo = resolveBudget({ budget: budgetArg, model });
+
       const read = await readSession(client, sessionId);
       const sum = summarizeSession(read.session, {
-        budget,
+        budget: budgetArg,
+        model,
         fidelity: args.fidelity as any,
         focus: Array.isArray(args.focus) ? args.focus.map(String) : undefined,
       });
 
+      // 预算来源说明
+      const sourceText = budgetInfo.source === 'model'
+        ? `模型 ${model} → ${budgetInfo.modelPreset?.label ?? '预设'} ${budgetInfo.modelPreset?.context ?? budgetInfo.requested}`
+        : budgetInfo.source === 'explicit'
+          ? `显式指定 ${budgetInfo.requested}`
+          : budgetInfo.source === 'clamped'
+            ? `已裁剪到上限 ${budgetInfo.requested}`
+            : `默认 ${budgetInfo.requested}`;
+
       const header = [
         `<!-- 会话上下文：${read.session.title} -->`,
-        `<!-- 来源 ${client} · ${read.session.turns.length} 轮 · 预算 ${budget}（有效 ${effectiveBudget(budget)}） -->`,
+        `<!-- 来源 ${client} · ${read.session.turns.length} 轮 · 预算 ${budgetInfo.effective}（${sourceText}，安全系数 92%） -->`,
         `<!-- ${formatStats(sum.stats).replace(/\n/g, ' | ')} -->`,
         '',
       ].join('\n');
@@ -323,6 +343,7 @@ export function registerTools(server: McpServer): void {
           client: { type: 'string', description: '客户端（必填）' },
           sessionId: { type: 'string', description: '会话 ID（必填）' },
           budget: { type: 'number', description: '摘要目标 token，默认 8000' },
+          model: { type: 'string', description: '模型名（可选，用于自动定预算；显式 budget 优先）' },
         },
         required: ['client', 'sessionId'],
       },
@@ -331,10 +352,11 @@ export function registerTools(server: McpServer): void {
       const client = assertClient(args.client, 'client');
       const sessionId = String(args.sessionId ?? '');
       if (!sessionId) throw new Error('sessionId 不能为空');
-      const budget = Number(args.budget ?? 8_000);
+      const budget = args.budget != null ? Number(args.budget) : 8_000;
+      const model = args.model ? String(args.model) : undefined;
 
       const read = await readSession(client, sessionId);
-      const sum = summarizeSession(read.session, { budget, fidelity: 'compact' });
+      const sum = summarizeSession(read.session, { budget, model, fidelity: 'compact' });
 
       const lines = [
         `# ${read.session.title}`,
@@ -352,6 +374,49 @@ export function registerTools(server: McpServer): void {
         lines.push(`- **第 ${o.turn} 轮**：${o.intent || '（无明确意图）'}${files}${tools}`);
       }
       lines.push('', '## 压缩上下文', '', sum.context);
+      return textResult(lines.join('\n'));
+    },
+  );
+
+  // ── 7. list_models ──
+  server.tool(
+    {
+      name: 'list_models',
+      description:
+        '列出内置的模型上下文长度预设。调用 get_context 时可传 model 名自动定预算，'
+        + '也可直接传 budget（显式 token 数，优先级更高）。',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: '按名称过滤（可选）' },
+        },
+      },
+    },
+    async (args) => {
+      const q = args.query ? String(args.query).toLowerCase() : '';
+      const rows = MODEL_CONTEXT_PRESETS.filter(
+        (p) => !q || p.match.includes(q) || p.label.toLowerCase().includes(q),
+      );
+      const lines = [
+        '# 模型上下文长度预设',
+        '',
+        `默认预算：${DEFAULT_BUDGET.toLocaleString()} tokens（未指定 model / budget 时）`,
+        `安全系数：92%（实际可用 = 上下文 × 0.92）`,
+        `硬上限：2,000,000 tokens`,
+        '',
+        '| 匹配片段 | 上下文窗口 | 实际可用 | 模型 |',
+        '|---|---|---|---|',
+      ];
+      for (const p of rows) {
+        lines.push(
+          `| \`${p.match}\` | ${p.context.toLocaleString()} | ${Math.floor(p.context * 0.92).toLocaleString()} | ${p.label} |`,
+        );
+      }
+      lines.push('');
+      lines.push('用法示例：');
+      lines.push('- `get_context({ client, sessionId, model: "claude-sonnet-4-5" })` → 按 200k 预算');
+      lines.push('- `get_context({ client, sessionId, budget: 500000 })` → 显式 500k');
+      lines.push('- 两者同时传时，`budget` 优先');
       return textResult(lines.join('\n'));
     },
   );

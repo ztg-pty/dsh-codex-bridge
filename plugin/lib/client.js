@@ -11,13 +11,15 @@ window.__ModuleLoader__.load({
 let react = require("react");
 		let react_jsx_runtime = require("react/jsx-runtime");
 
-const jsx5 = react_jsx_runtime["jsx"]; const jsxs5 = react_jsx_runtime["jsxs"];
-const Fragment2 = react_jsx_runtime["Fragment"]; const jsx4 = react_jsx_runtime["jsx"]; const jsxs4 = react_jsx_runtime["jsxs"];
+const jsx6 = react_jsx_runtime["jsx"]; const jsxs6 = react_jsx_runtime["jsxs"];
+const Fragment2 = react_jsx_runtime["Fragment"]; const jsx5 = react_jsx_runtime["jsx"]; const jsxs5 = react_jsx_runtime["jsxs"];
 const useCallback4 = react["useCallback"]; const useEffect4 = react["useEffect"]; const useState4 = react["useState"];
-const Fragment = react_jsx_runtime["Fragment"]; const jsx3 = react_jsx_runtime["jsx"]; const jsxs3 = react_jsx_runtime["jsxs"];
-const useCallback3 = react["useCallback"]; const useEffect3 = react["useEffect"]; const useMemo3 = react["useMemo"]; const useState3 = react["useState"];
+const Fragment = react_jsx_runtime["Fragment"]; const jsx4 = react_jsx_runtime["jsx"]; const jsxs4 = react_jsx_runtime["jsxs"];
+const useCallback3 = react["useCallback"]; const useEffect3 = react["useEffect"]; const useMemo4 = react["useMemo"]; const useState3 = react["useState"];
+const jsx3 = react_jsx_runtime["jsx"]; const jsxs3 = react_jsx_runtime["jsxs"];
 const jsx2 = react_jsx_runtime["jsx"]; const jsxs2 = react_jsx_runtime["jsxs"];
-const useCallback2 = react["useCallback"]; const useEffect2 = react["useEffect"]; const useMemo2 = react["useMemo"]; const useState2 = react["useState"];
+const useMemo2 = react["useMemo"];
+const useCallback2 = react["useCallback"]; const useEffect2 = react["useEffect"]; const useMemo3 = react["useMemo"]; const useState2 = react["useState"];
 const jsx = react_jsx_runtime["jsx"]; const jsxs = react_jsx_runtime["jsxs"];
 const useCallback = react["useCallback"]; const useEffect = react["useEffect"]; const useMemo = react["useMemo"]; const useState = react["useState"];
 const useCallback5 = react["useCallback"]; const useEffect5 = react["useEffect"]; const useState5 = react["useState"];
@@ -332,6 +334,114 @@ function ImportDialog({ apiBase, onBack }) {
 
 // src/client/ExportDialog.tsx
 
+// src/client/BudgetPicker.tsx
+
+
+var MODEL_OPTIONS = [
+  { value: "", label: "\u9ED8\u8BA4\uFF08200k\uFF09", context: 2e5 },
+  { value: "claude-sonnet-4-5", label: "Claude Sonnet 4.5", context: 2e5 },
+  { value: "claude-opus-4", label: "Claude Opus 4", context: 2e5 },
+  { value: "gpt-5", label: "GPT-5", context: 4e5 },
+  { value: "gpt-4.1", label: "GPT-4.1", context: 1e6 },
+  { value: "gpt-4o", label: "GPT-4o", context: 128e3 },
+  { value: "gemini-2.0", label: "Gemini 2.0", context: 1e6 },
+  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro", context: 2e6 },
+  { value: "deepseek-v4", label: "DeepSeek V4", context: 256e3 },
+  { value: "deepseek-v3", label: "DeepSeek V3", context: 128e3 },
+  { value: "glm-5", label: "GLM-5", context: 2e5 },
+  { value: "glm-4.6", label: "GLM-4.6", context: 2e5 },
+  { value: "kimi-k2", label: "Kimi K2", context: 256e3 },
+  { value: "qwen", label: "Qwen", context: 128e3 }
+];
+var BUDGET_PRESETS = [16e3, 32e3, 64e3, 128e3, 2e5, 256e3, 4e5, 1e6];
+var DEFAULT_BUDGET_VALUE = { mode: "model", model: "", custom: 2e5 };
+function resolveDisplayBudget(v) {
+  let requested;
+  let label;
+  if (v.mode === "custom") {
+    requested = Math.max(1, Math.min(v.custom, 2e6));
+    label = "\u81EA\u5B9A\u4E49";
+  } else {
+    const opt = MODEL_OPTIONS.find((m) => m.value === v.model);
+    requested = opt?.context ?? 2e5;
+    label = opt && opt.value ? opt.label : "\u9ED8\u8BA4";
+  }
+  return { requested, effective: Math.floor(requested * 0.92), label };
+}
+function BudgetPicker({ value, onChange, originalTokens, disabled }) {
+  const display = useMemo2(() => resolveDisplayBudget(value), [value]);
+  return /* @__PURE__ */ jsxs2("div", { className: "cb-budget", children: [
+    /* @__PURE__ */ jsxs2("div", { className: "filters", style: { gap: 10 }, children: [
+      /* @__PURE__ */ jsxs2("label", { children: [
+        "\u4E0A\u4E0B\u6587\u957F\u5EA6",
+        /* @__PURE__ */ jsxs2(
+          "select",
+          {
+            value: value.mode,
+            onChange: (e) => onChange({ ...value, mode: e.target.value }),
+            disabled,
+            children: [
+              /* @__PURE__ */ jsx2("option", { value: "model", children: "\u6309\u6A21\u578B" }),
+              /* @__PURE__ */ jsx2("option", { value: "custom", children: "\u81EA\u5B9A\u4E49 token" })
+            ]
+          }
+        )
+      ] }),
+      value.mode === "model" ? /* @__PURE__ */ jsxs2("label", { style: { flex: "1 1 200px" }, children: [
+        "\u6A21\u578B",
+        /* @__PURE__ */ jsx2(
+          "select",
+          {
+            style: { flex: 1 },
+            value: value.model,
+            onChange: (e) => onChange({ ...value, model: e.target.value }),
+            disabled,
+            children: MODEL_OPTIONS.map((m) => /* @__PURE__ */ jsxs2("option", { value: m.value, children: [
+              m.label,
+              m.value ? ` \xB7 ${(m.context / 1e3).toLocaleString()}k` : ""
+            ] }, m.value))
+          }
+        )
+      ] }) : /* @__PURE__ */ jsxs2("label", { style: { flex: "1 1 200px" }, children: [
+        "\u4E0A\u9650",
+        /* @__PURE__ */ jsx2(
+          "select",
+          {
+            style: { flex: 1 },
+            value: value.custom,
+            onChange: (e) => onChange({ ...value, custom: Number(e.target.value) }),
+            disabled,
+            children: BUDGET_PRESETS.map((b) => /* @__PURE__ */ jsxs2("option", { value: b, children: [
+              (b / 1e3).toLocaleString(),
+              "k tokens"
+            ] }, b))
+          }
+        )
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs2("div", { className: "cb-row-hint", style: { marginTop: 4 }, children: [
+      "\u9884\u7B97 ",
+      display.requested.toLocaleString(),
+      " \u2192 \u5B9E\u9645\u53EF\u7528",
+      " ",
+      /* @__PURE__ */ jsx2("b", { style: { color: "var(--cb-text)" }, children: display.effective.toLocaleString() }),
+      " tokens \uFF08\u5B89\u5168\u7CFB\u6570 92%\uFF09",
+      originalTokens != null && (originalTokens <= display.effective ? /* @__PURE__ */ jsxs2("span", { style: { color: "var(--cb-success)" }, children: [
+        " \xB7 \u4F1A\u8BDD ",
+        originalTokens.toLocaleString(),
+        " tokens\uFF0C\u65E0\u9700\u538B\u7F29"
+      ] }) : /* @__PURE__ */ jsxs2("span", { style: { color: "var(--cb-warn)" }, children: [
+        " \xB7 \u4F1A\u8BDD ",
+        originalTokens.toLocaleString(),
+        " tokens\uFF0C\u5C06\u538B\u7F29\u5230 ",
+        (display.effective / originalTokens * 100).toFixed(0),
+        "%"
+      ] }))
+    ] })
+  ] });
+}
+
+// src/client/ExportDialog.tsx
 
 function ExportDialog({ apiBase, onBack }) {
   const [phase, setPhase] = useState2("loading");
@@ -345,6 +455,8 @@ function ExportDialog({ apiBase, onBack }) {
   const [registerState, setRegisterState] = useState2("idle");
   const [registerResult, setRegisterResult] = useState2(null);
   const [registerError, setRegisterError] = useState2(null);
+  const [budgetValue, setBudgetValue] = useState2(DEFAULT_BUDGET_VALUE);
+  const [trimContext, setTrimContext] = useState2(false);
   const doRegister = useCallback2(async () => {
     setRegistering(true);
     setRegisterError(null);
@@ -382,7 +494,7 @@ function ExportDialog({ apiBase, onBack }) {
   useEffect2(() => {
     void load();
   }, [load]);
-  const visible = useMemo2(
+  const visible = useMemo3(
     () => sessions.filter((s) => !keyword || s.title.toLowerCase().includes(keyword.toLowerCase())).sort((a, b) => b.updatedAt - a.updatedAt),
     [sessions, keyword]
   );
@@ -403,6 +515,11 @@ function ExportDialog({ apiBase, onBack }) {
     try {
       const endpoint = target === "workbuddy" ? "/export-workbuddy" : "/export";
       const body = target === "workbuddy" ? { sessionIds: [...checked] } : { sessionIds: [...checked], doBackup: true };
+      if (trimContext) {
+        if (budgetValue.mode === "custom") body.budget = budgetValue.custom;
+        else if (budgetValue.model) body.model = budgetValue.model;
+        body.trimContext = true;
+      }
       const r = await fetch(`${apiBase}${endpoint}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -418,133 +535,151 @@ function ExportDialog({ apiBase, onBack }) {
     }
   };
   if (phase === "loading") {
-    return /* @__PURE__ */ jsxs2("div", { className: "dialog", children: [
-      /* @__PURE__ */ jsx2("h3", { children: "\u5BFC\u51FA\u4F1A\u8BDD" }),
-      /* @__PURE__ */ jsx2("p", { children: "\u6B63\u5728\u52A0\u8F7D\u4F1A\u8BDD\u5217\u8868\u2026" }),
-      /* @__PURE__ */ jsx2("div", { className: "spinner" })
+    return /* @__PURE__ */ jsxs3("div", { className: "dialog", children: [
+      /* @__PURE__ */ jsx3("h3", { children: "\u5BFC\u51FA\u4F1A\u8BDD" }),
+      /* @__PURE__ */ jsx3("p", { children: "\u6B63\u5728\u52A0\u8F7D\u4F1A\u8BDD\u5217\u8868\u2026" }),
+      /* @__PURE__ */ jsx3("div", { className: "spinner" })
     ] });
   }
   if (phase === "exporting") {
-    return /* @__PURE__ */ jsxs2("div", { className: "dialog", children: [
-      /* @__PURE__ */ jsx2("h3", { children: target === "workbuddy" ? "\u6B63\u5728\u5BFC\u5165 WorkBuddy\u2026" : "\u6B63\u5728\u5BFC\u51FA\u2026" }),
-      /* @__PURE__ */ jsx2("p", { children: target === "workbuddy" ? "\u6B63\u5728\u8F6C\u6362\u5E76\u5199\u5165 WorkBuddy \u672C\u5730\u5B58\u50A8\uFF0C\u8BF7\u7A0D\u5019\u3002" : "\u6B63\u5728\u8F6C\u6362\u5E76\u5907\u4EFD Codex \u76EE\u5F55\u4E2D\u7684\u65E7\u6587\u4EF6\uFF0C\u8BF7\u7A0D\u5019\u3002" }),
-      /* @__PURE__ */ jsx2("div", { className: "spinner" })
+    return /* @__PURE__ */ jsxs3("div", { className: "dialog", children: [
+      /* @__PURE__ */ jsx3("h3", { children: target === "workbuddy" ? "\u6B63\u5728\u5BFC\u5165 WorkBuddy\u2026" : "\u6B63\u5728\u5BFC\u51FA\u2026" }),
+      /* @__PURE__ */ jsx3("p", { children: target === "workbuddy" ? "\u6B63\u5728\u8F6C\u6362\u5E76\u5199\u5165 WorkBuddy \u672C\u5730\u5B58\u50A8\uFF0C\u8BF7\u7A0D\u5019\u3002" : "\u6B63\u5728\u8F6C\u6362\u5E76\u5907\u4EFD Codex \u76EE\u5F55\u4E2D\u7684\u65E7\u6587\u4EF6\uFF0C\u8BF7\u7A0D\u5019\u3002" }),
+      /* @__PURE__ */ jsx3("div", { className: "spinner" })
     ] });
   }
   if (phase === "error") {
-    return /* @__PURE__ */ jsxs2("div", { className: "dialog", children: [
-      /* @__PURE__ */ jsx2("h3", { children: "\u5BFC\u51FA\u5931\u8D25" }),
-      /* @__PURE__ */ jsx2("div", { className: "alert error", children: error }),
-      /* @__PURE__ */ jsxs2("div", { className: "dialog-footer", children: [
-        /* @__PURE__ */ jsx2("button", { onClick: onBack, children: "\u8FD4\u56DE" }),
-        /* @__PURE__ */ jsx2("button", { className: "primary", onClick: load, children: "\u91CD\u8BD5" })
+    return /* @__PURE__ */ jsxs3("div", { className: "dialog", children: [
+      /* @__PURE__ */ jsx3("h3", { children: "\u5BFC\u51FA\u5931\u8D25" }),
+      /* @__PURE__ */ jsx3("div", { className: "alert error", children: error }),
+      /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
+        /* @__PURE__ */ jsx3("button", { onClick: onBack, children: "\u8FD4\u56DE" }),
+        /* @__PURE__ */ jsx3("button", { className: "primary", onClick: load, children: "\u91CD\u8BD5" })
       ] })
     ] });
   }
   if (phase === "pick") {
-    return /* @__PURE__ */ jsxs2("div", { className: "dialog wide", children: [
-      /* @__PURE__ */ jsx2("h3", { children: "\u5BFC\u51FA\u4F1A\u8BDD" }),
-      /* @__PURE__ */ jsxs2("div", { className: "filters", style: { gap: 16 }, children: [
-        /* @__PURE__ */ jsx2("span", { className: "muted", children: "\u5BFC\u51FA\u76EE\u6807\uFF1A" }),
-        /* @__PURE__ */ jsxs2("label", { children: [
-          /* @__PURE__ */ jsx2("input", { type: "radio", name: "target", checked: target === "codex", onChange: () => setTarget("codex") }),
+    return /* @__PURE__ */ jsxs3("div", { className: "dialog wide", children: [
+      /* @__PURE__ */ jsx3("h3", { children: "\u5BFC\u51FA\u4F1A\u8BDD" }),
+      /* @__PURE__ */ jsxs3("div", { className: "filters", style: { gap: 16 }, children: [
+        /* @__PURE__ */ jsx3("span", { className: "muted", children: "\u5BFC\u51FA\u76EE\u6807\uFF1A" }),
+        /* @__PURE__ */ jsxs3("label", { children: [
+          /* @__PURE__ */ jsx3("input", { type: "radio", name: "target", checked: target === "codex", onChange: () => setTarget("codex") }),
           "Codex\uFF08\u751F\u6210 JSONL\uFF0C\u9700\u624B\u52A8\u590D\u5236\uFF09"
         ] }),
-        /* @__PURE__ */ jsxs2("label", { children: [
-          /* @__PURE__ */ jsx2("input", { type: "radio", name: "target", checked: target === "workbuddy", onChange: () => setTarget("workbuddy") }),
+        /* @__PURE__ */ jsxs3("label", { children: [
+          /* @__PURE__ */ jsx3("input", { type: "radio", name: "target", checked: target === "workbuddy", onChange: () => setTarget("workbuddy") }),
           "WorkBuddy\uFF08\u76F4\u63A5\u5199\u5165\u672C\u5730\uFF0C\u91CD\u542F\u5373\u53EF\u89C1\uFF09"
         ] })
       ] }),
-      /* @__PURE__ */ jsxs2("p", { className: "muted", children: [
+      /* @__PURE__ */ jsxs3("p", { className: "muted", children: [
         "\u9009\u62E9\u8981\u5BFC\u51FA\u7684\u4F1A\u8BDD\uFF08\u53EF\u591A\u9009\uFF0C\u4E0D\u4F1A\u81EA\u52A8\u5168\u9009\uFF09\u3002",
-        /* @__PURE__ */ jsx2("br", {}),
-        /* @__PURE__ */ jsxs2("span", { style: { fontSize: 12 }, children: [
+        /* @__PURE__ */ jsx3("br", {}),
+        /* @__PURE__ */ jsxs3("span", { style: { fontSize: 12 }, children: [
           "\u63D0\u793A\uFF1ADSH \u6309\u300C\u9996\u6761\u6D88\u606F\u300D\u81EA\u52A8\u547D\u540D\uFF0C\u56E0\u6B64",
-          /* @__PURE__ */ jsx2("strong", { children: "\u540C\u540D\u4E0D\u4EE3\u8868\u91CD\u590D" }),
+          /* @__PURE__ */ jsx3("strong", { children: "\u540C\u540D\u4E0D\u4EE3\u8868\u91CD\u590D" }),
           "\u3002\u8BF7\u7528\u300C\u4F1A\u8BDD ID\u300D\u548C\u66F4\u65B0\u65F6\u95F4\u533A\u5206\u3002"
         ] })
       ] }),
-      /* @__PURE__ */ jsxs2("div", { className: "filters", children: [
-        /* @__PURE__ */ jsx2("input", { placeholder: "\u6309\u6807\u9898\u7B5B\u9009\u2026", value: keyword, onChange: (e) => setKeyword(e.target.value) }),
-        /* @__PURE__ */ jsx2("button", { onClick: load, children: "\u5237\u65B0" })
+      /* @__PURE__ */ jsxs3("div", { className: "filters", children: [
+        /* @__PURE__ */ jsx3("input", { placeholder: "\u6309\u6807\u9898\u7B5B\u9009\u2026", value: keyword, onChange: (e) => setKeyword(e.target.value) }),
+        /* @__PURE__ */ jsx3("button", { onClick: load, children: "\u5237\u65B0" })
       ] }),
-      /* @__PURE__ */ jsxs2("table", { className: "sessions", children: [
-        /* @__PURE__ */ jsx2("thead", { children: /* @__PURE__ */ jsxs2("tr", { children: [
-          /* @__PURE__ */ jsx2("th", { style: { width: 32 } }),
-          /* @__PURE__ */ jsx2("th", { children: "\u6807\u9898" }),
-          /* @__PURE__ */ jsx2("th", { children: "\u4F1A\u8BDD ID" }),
-          /* @__PURE__ */ jsx2("th", { children: "\u6700\u540E\u66F4\u65B0" }),
-          /* @__PURE__ */ jsx2("th", { children: "\u8F6E\u6B21" }),
-          /* @__PURE__ */ jsx2("th", { children: "\u5927\u5C0F" })
+      /* @__PURE__ */ jsxs3("table", { className: "sessions", children: [
+        /* @__PURE__ */ jsx3("thead", { children: /* @__PURE__ */ jsxs3("tr", { children: [
+          /* @__PURE__ */ jsx3("th", { style: { width: 32 } }),
+          /* @__PURE__ */ jsx3("th", { children: "\u6807\u9898" }),
+          /* @__PURE__ */ jsx3("th", { children: "\u4F1A\u8BDD ID" }),
+          /* @__PURE__ */ jsx3("th", { children: "\u6700\u540E\u66F4\u65B0" }),
+          /* @__PURE__ */ jsx3("th", { children: "\u8F6E\u6B21" }),
+          /* @__PURE__ */ jsx3("th", { children: "\u5927\u5C0F" })
         ] }) }),
-        /* @__PURE__ */ jsx2("tbody", { children: visible.map((s) => /* @__PURE__ */ jsxs2("tr", { className: checked.has(s.id) ? "checked" : "", children: [
-          /* @__PURE__ */ jsx2("td", { children: /* @__PURE__ */ jsx2("input", { type: "checkbox", checked: checked.has(s.id), onChange: () => toggle(s.id) }) }),
-          /* @__PURE__ */ jsx2("td", { title: s.title, children: s.title }),
-          /* @__PURE__ */ jsxs2("td", { className: "path", title: `${s.id}
+        /* @__PURE__ */ jsx3("tbody", { children: visible.map((s) => /* @__PURE__ */ jsxs3("tr", { className: checked.has(s.id) ? "checked" : "", children: [
+          /* @__PURE__ */ jsx3("td", { children: /* @__PURE__ */ jsx3("input", { type: "checkbox", checked: checked.has(s.id), onChange: () => toggle(s.id) }) }),
+          /* @__PURE__ */ jsx3("td", { title: s.title, children: s.title }),
+          /* @__PURE__ */ jsxs3("td", { className: "path", title: `${s.id}
 \u9879\u76EE\uFF1A${s.project}`, children: [
             "\u2026",
             s.id.slice(-8)
           ] }),
-          /* @__PURE__ */ jsx2("td", { children: new Date(s.updatedAt).toLocaleString("zh-CN", { hour12: false }) }),
-          /* @__PURE__ */ jsx2("td", { children: s.turns }),
-          /* @__PURE__ */ jsx2("td", { children: formatBytes(s.sizeBytes) })
+          /* @__PURE__ */ jsx3("td", { children: new Date(s.updatedAt).toLocaleString("zh-CN", { hour12: false }) }),
+          /* @__PURE__ */ jsx3("td", { children: s.turns }),
+          /* @__PURE__ */ jsx3("td", { children: formatBytes(s.sizeBytes) })
         ] }, s.id)) })
       ] }),
-      /* @__PURE__ */ jsxs2("div", { className: "dialog-footer", children: [
-        /* @__PURE__ */ jsxs2("span", { children: [
+      /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
+        /* @__PURE__ */ jsxs3("span", { children: [
           "\u5171 ",
           visible.length,
           " \u4E2A\u4F1A\u8BDD\uFF0C\u5DF2\u9009 ",
           checked.size,
           " \u4E2A"
         ] }),
-        /* @__PURE__ */ jsxs2("div", { children: [
-          /* @__PURE__ */ jsx2("button", { onClick: onBack, children: "\u53D6\u6D88" }),
-          /* @__PURE__ */ jsx2("button", { className: "primary", disabled: checked.size === 0, onClick: () => setPhase("confirm"), children: "\u4E0B\u4E00\u6B65" })
+        /* @__PURE__ */ jsxs3("div", { children: [
+          /* @__PURE__ */ jsx3("button", { onClick: onBack, children: "\u53D6\u6D88" }),
+          /* @__PURE__ */ jsx3("button", { className: "primary", disabled: checked.size === 0, onClick: () => setPhase("confirm"), children: "\u4E0B\u4E00\u6B65" })
         ] })
       ] }),
-      error && /* @__PURE__ */ jsx2("div", { className: "alert error", children: error })
+      error && /* @__PURE__ */ jsx3("div", { className: "alert error", children: error })
     ] });
   }
   if (phase === "confirm") {
-    return /* @__PURE__ */ jsxs2("div", { className: "dialog", children: [
-      /* @__PURE__ */ jsx2("h3", { children: "\u786E\u8BA4\u5BFC\u51FA" }),
-      /* @__PURE__ */ jsxs2("div", { className: "alert info", children: [
-        /* @__PURE__ */ jsxs2("p", { children: [
+    return /* @__PURE__ */ jsxs3("div", { className: "dialog", children: [
+      /* @__PURE__ */ jsx3("h3", { children: "\u786E\u8BA4\u5BFC\u51FA" }),
+      /* @__PURE__ */ jsxs3("div", { className: "alert info", children: [
+        /* @__PURE__ */ jsxs3("p", { children: [
           "\u5373\u5C06\u5BFC\u51FA ",
-          /* @__PURE__ */ jsx2("b", { children: checked.size }),
+          /* @__PURE__ */ jsx3("b", { children: checked.size }),
           " \u4E2A\u4F1A\u8BDD\u5230 ",
-          /* @__PURE__ */ jsx2("b", { children: target === "workbuddy" ? "WorkBuddy" : "Codex" }),
+          /* @__PURE__ */ jsx3("b", { children: target === "workbuddy" ? "WorkBuddy" : "Codex" }),
           "\u3002"
         ] }),
-        target === "workbuddy" ? /* @__PURE__ */ jsxs2("ul", { children: [
-          /* @__PURE__ */ jsx2("li", { children: "\u4F1A\u76F4\u63A5\u5199\u5165 WorkBuddy \u672C\u5730\u5B58\u50A8\uFF08\u6570\u636E\u5E93 + \u4F1A\u8BDD\u6587\u4EF6\uFF09\u3002" }),
-          /* @__PURE__ */ jsx2("li", { children: "\u5199\u5165\u524D\u4F1A\u81EA\u52A8\u5907\u4EFD WorkBuddy \u7684\u6570\u636E\u5E93\u3002" }),
-          /* @__PURE__ */ jsxs2("li", { children: [
+        target === "workbuddy" ? /* @__PURE__ */ jsxs3("ul", { children: [
+          /* @__PURE__ */ jsx3("li", { children: "\u4F1A\u76F4\u63A5\u5199\u5165 WorkBuddy \u672C\u5730\u5B58\u50A8\uFF08\u6570\u636E\u5E93 + \u4F1A\u8BDD\u6587\u4EF6\uFF09\u3002" }),
+          /* @__PURE__ */ jsx3("li", { children: "\u5199\u5165\u524D\u4F1A\u81EA\u52A8\u5907\u4EFD WorkBuddy \u7684\u6570\u636E\u5E93\u3002" }),
+          /* @__PURE__ */ jsxs3("li", { children: [
             "\u5B8C\u6210\u540E",
-            /* @__PURE__ */ jsx2("b", { children: "\u91CD\u542F WorkBuddy" }),
+            /* @__PURE__ */ jsx3("b", { children: "\u91CD\u542F WorkBuddy" }),
             "\u5373\u53EF\u5728\u4F1A\u8BDD\u5217\u8868\u770B\u5230\u3002"
           ] })
-        ] }) : /* @__PURE__ */ jsxs2("ul", { children: [
-          /* @__PURE__ */ jsx2("li", { children: "\u4F1A\u5BFC\u51FA\u4E3A OpenAI \u517C\u5BB9 JSONL \u5230\u53D7\u63A7\u76EE\u5F55\u3002" }),
-          /* @__PURE__ */ jsxs2("li", { children: [
+        ] }) : /* @__PURE__ */ jsxs3("ul", { children: [
+          /* @__PURE__ */ jsx3("li", { children: "\u4F1A\u5BFC\u51FA\u4E3A OpenAI \u517C\u5BB9 JSONL \u5230\u53D7\u63A7\u76EE\u5F55\u3002" }),
+          /* @__PURE__ */ jsxs3("li", { children: [
             "\u5BFC\u51FA\u524D\u4F1A\u81EA\u52A8",
-            /* @__PURE__ */ jsx2("b", { children: "\u5907\u4EFD" }),
+            /* @__PURE__ */ jsx3("b", { children: "\u5907\u4EFD" }),
             " Codex \u76EE\u5F55\u4E2D\u7684\u65E7\u7248 JSONL\u3002"
           ] }),
-          /* @__PURE__ */ jsxs2("li", { children: [
+          /* @__PURE__ */ jsxs3("li", { children: [
             "\u63D2\u4EF6",
-            /* @__PURE__ */ jsx2("b", { children: "\u4E0D\u4F1A" }),
+            /* @__PURE__ */ jsx3("b", { children: "\u4E0D\u4F1A" }),
             "\u76F4\u63A5\u5199\u5165 Codex \u4F1A\u8BDD\u76EE\u5F55\uFF0C\u907F\u514D\u7834\u574F\u6B63\u5728\u8FDB\u884C\u7684\u4F1A\u8BDD\u3002"
           ] }),
-          /* @__PURE__ */ jsx2("li", { children: "\u5BFC\u51FA\u540E\u9700\u624B\u52A8\u590D\u5236\u5230 Codex \u539F\u76EE\u5F55\uFF0C\u5E76\u70B9\u300C\u6CE8\u518C\u5230 Codex \u7D22\u5F15\u300D\u3002" })
+          /* @__PURE__ */ jsx3("li", { children: "\u5BFC\u51FA\u540E\u9700\u624B\u52A8\u590D\u5236\u5230 Codex \u539F\u76EE\u5F55\uFF0C\u5E76\u70B9\u300C\u6CE8\u518C\u5230 Codex \u7D22\u5F15\u300D\u3002" })
         ] })
       ] }),
-      /* @__PURE__ */ jsxs2("div", { className: "dialog-footer", children: [
-        /* @__PURE__ */ jsx2("div", {}),
-        /* @__PURE__ */ jsxs2("div", { children: [
-          /* @__PURE__ */ jsx2("button", { onClick: () => setPhase("pick"), children: "\u8FD4\u56DE" }),
-          /* @__PURE__ */ jsx2("button", { className: "primary", onClick: doExport, children: "\u786E\u8BA4\u5BFC\u51FA" })
+      /* @__PURE__ */ jsxs3("div", { className: "cb-card", children: [
+        /* @__PURE__ */ jsxs3("div", { className: "cb-card-head", children: [
+          /* @__PURE__ */ jsx3("span", { className: "cb-card-title", children: "\u4E0A\u4E0B\u6587\u957F\u5EA6" }),
+          /* @__PURE__ */ jsxs3("label", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 400 }, children: [
+            /* @__PURE__ */ jsx3(
+              "input",
+              {
+                type: "checkbox",
+                checked: trimContext,
+                onChange: (e) => setTrimContext(e.target.checked)
+              }
+            ),
+            "\u542F\u7528\u88C1\u526A"
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx3("div", { className: "cb-card-desc", children: trimContext ? "\u4F1A\u6309\u6240\u9009\u9884\u7B97\u538B\u7F29\u4F1A\u8BDD\u5185\u5BB9\uFF08\u6280\u672F\u7EC6\u8282\u4F18\u5148\u4FDD\u7559\uFF09\uFF0C\u8D85\u51FA\u90E8\u5206\u6298\u53E0\u4E3A\u6458\u8981\u3002" : "\u9ED8\u8BA4\u5B8C\u6574\u5BFC\u51FA\uFF08\u4E0D\u88C1\u526A\uFF09\u3002\u76EE\u6807\u6A21\u578B\u4E0A\u4E0B\u6587\u6709\u9650\u65F6\u53EF\u542F\u7528\u88C1\u526A\u3002" }),
+        trimContext && /* @__PURE__ */ jsx3("div", { className: "cb-card-body", children: /* @__PURE__ */ jsx3(BudgetPicker, { value: budgetValue, onChange: setBudgetValue }) })
+      ] }),
+      /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
+        /* @__PURE__ */ jsx3("div", {}),
+        /* @__PURE__ */ jsxs3("div", { children: [
+          /* @__PURE__ */ jsx3("button", { onClick: () => setPhase("pick"), children: "\u8FD4\u56DE" }),
+          /* @__PURE__ */ jsx3("button", { className: "primary", onClick: doExport, children: "\u786E\u8BA4\u5BFC\u51FA" })
         ] })
       ] })
     ] });
@@ -552,40 +687,40 @@ function ExportDialog({ apiBase, onBack }) {
   const okCount = result?.succ ?? 0;
   const failed = result?.failed ?? 0;
   if (target === "workbuddy") {
-    return /* @__PURE__ */ jsxs2("div", { className: "dialog wide", children: [
-      /* @__PURE__ */ jsx2("h3", { children: "\u5DF2\u5BFC\u5165 WorkBuddy" }),
-      /* @__PURE__ */ jsxs2("div", { className: `alert ${failed === 0 ? "success" : "warn"}`, children: [
+    return /* @__PURE__ */ jsxs3("div", { className: "dialog wide", children: [
+      /* @__PURE__ */ jsx3("h3", { children: "\u5DF2\u5BFC\u5165 WorkBuddy" }),
+      /* @__PURE__ */ jsxs3("div", { className: `alert ${failed === 0 ? "success" : "warn"}`, children: [
         "\u2705 \u6210\u529F\u5BFC\u5165 ",
         okCount,
         " \u4E2A\u4F1A\u8BDD",
         failed > 0 ? `\uFF0C${failed} \u4E2A\u5931\u8D25` : "",
         "\u3002"
       ] }),
-      /* @__PURE__ */ jsx2("div", { className: "alert info", children: /* @__PURE__ */ jsxs2("p", { children: [
-        /* @__PURE__ */ jsx2("b", { children: "\u91CD\u542F WorkBuddy" }),
+      /* @__PURE__ */ jsx3("div", { className: "alert info", children: /* @__PURE__ */ jsxs3("p", { children: [
+        /* @__PURE__ */ jsx3("b", { children: "\u91CD\u542F WorkBuddy" }),
         " \u540E\u5373\u53EF\u5728\u4F1A\u8BDD\u5217\u8868\u770B\u5230\u8FD9\u4E9B\u4F1A\u8BDD\uFF08\u5B83\u53EA\u5728\u542F\u52A8\u65F6\u8BFB\u6570\u636E\u5E93\uFF09\u3002"
       ] }) }),
-      /* @__PURE__ */ jsxs2("table", { className: "sessions", children: [
-        /* @__PURE__ */ jsx2("thead", { children: /* @__PURE__ */ jsxs2("tr", { children: [
-          /* @__PURE__ */ jsx2("th", { children: "\u7ED3\u679C" }),
-          /* @__PURE__ */ jsx2("th", { children: "\u4F1A\u8BDD" }),
-          /* @__PURE__ */ jsx2("th", { children: "WorkBuddy \u4F1A\u8BDD ID" }),
-          /* @__PURE__ */ jsx2("th", { children: "\u8BB0\u5F55\u6570" }),
-          /* @__PURE__ */ jsx2("th", { children: "\u8BF4\u660E" })
+      /* @__PURE__ */ jsxs3("table", { className: "sessions", children: [
+        /* @__PURE__ */ jsx3("thead", { children: /* @__PURE__ */ jsxs3("tr", { children: [
+          /* @__PURE__ */ jsx3("th", { children: "\u7ED3\u679C" }),
+          /* @__PURE__ */ jsx3("th", { children: "\u4F1A\u8BDD" }),
+          /* @__PURE__ */ jsx3("th", { children: "WorkBuddy \u4F1A\u8BDD ID" }),
+          /* @__PURE__ */ jsx3("th", { children: "\u8BB0\u5F55\u6570" }),
+          /* @__PURE__ */ jsx3("th", { children: "\u8BF4\u660E" })
         ] }) }),
-        /* @__PURE__ */ jsx2("tbody", { children: (result?.results ?? []).map((r, i) => /* @__PURE__ */ jsxs2("tr", { children: [
-          /* @__PURE__ */ jsx2("td", { children: r.ok ? "\u2705" : "\u274C" }),
-          /* @__PURE__ */ jsx2("td", { title: r.sourceSessionId, children: r.sourceSessionId }),
-          /* @__PURE__ */ jsx2("td", { className: "path", title: r.jsonlPath ?? "", children: r.workbuddySessionId ? `\u2026${String(r.workbuddySessionId).slice(-8)}` : "\u2014" }),
-          /* @__PURE__ */ jsx2("td", { children: r.rows ?? 0 }),
-          /* @__PURE__ */ jsx2("td", { className: "reason", children: r.error?.message ?? (r.warnings?.[0] ?? "\u2014") })
+        /* @__PURE__ */ jsx3("tbody", { children: (result?.results ?? []).map((r, i) => /* @__PURE__ */ jsxs3("tr", { children: [
+          /* @__PURE__ */ jsx3("td", { children: r.ok ? "\u2705" : "\u274C" }),
+          /* @__PURE__ */ jsx3("td", { title: r.sourceSessionId, children: r.sourceSessionId }),
+          /* @__PURE__ */ jsx3("td", { className: "path", title: r.jsonlPath ?? "", children: r.workbuddySessionId ? `\u2026${String(r.workbuddySessionId).slice(-8)}` : "\u2014" }),
+          /* @__PURE__ */ jsx3("td", { children: r.rows ?? 0 }),
+          /* @__PURE__ */ jsx3("td", { className: "reason", children: r.error?.message ?? (r.warnings?.[0] ?? "\u2014") })
         ] }, i)) })
       ] }),
-      /* @__PURE__ */ jsxs2("div", { className: "dialog-footer", children: [
-        /* @__PURE__ */ jsx2("div", {}),
-        /* @__PURE__ */ jsxs2("div", { children: [
-          /* @__PURE__ */ jsx2("button", { onClick: onBack, children: "\u5B8C\u6210" }),
-          /* @__PURE__ */ jsx2("button", { onClick: () => {
+      /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
+        /* @__PURE__ */ jsx3("div", {}),
+        /* @__PURE__ */ jsxs3("div", { children: [
+          /* @__PURE__ */ jsx3("button", { onClick: onBack, children: "\u5B8C\u6210" }),
+          /* @__PURE__ */ jsx3("button", { onClick: () => {
             setResult(null);
             setChecked(/* @__PURE__ */ new Set());
             setPhase("pick");
@@ -594,31 +729,31 @@ function ExportDialog({ apiBase, onBack }) {
       ] })
     ] });
   }
-  return /* @__PURE__ */ jsxs2("div", { className: "dialog wide", children: [
-    /* @__PURE__ */ jsx2("h3", { children: "\u5BFC\u51FA\u5B8C\u6210" }),
-    /* @__PURE__ */ jsxs2("div", { className: `alert ${failed === 0 ? "success" : "warn"}`, children: [
+  return /* @__PURE__ */ jsxs3("div", { className: "dialog wide", children: [
+    /* @__PURE__ */ jsx3("h3", { children: "\u5BFC\u51FA\u5B8C\u6210" }),
+    /* @__PURE__ */ jsxs3("div", { className: `alert ${failed === 0 ? "success" : "warn"}`, children: [
       "\u2705 \u6210\u529F\u5BFC\u51FA ",
       okCount,
       " \u4E2A\u4F1A\u8BDD",
       failed > 0 ? `\uFF0C${failed} \u4E2A\u5931\u8D25` : "",
       "\u3002"
     ] }),
-    /* @__PURE__ */ jsxs2("dl", { className: "paths", children: [
-      /* @__PURE__ */ jsx2("dt", { children: "\u{1F4C1} \u65B0\u6587\u4EF6\u4F4D\u7F6E" }),
-      /* @__PURE__ */ jsx2("dd", { children: /* @__PURE__ */ jsx2("code", { children: result?.outDir ?? "(\u672A\u77E5)" }) }),
-      /* @__PURE__ */ jsx2("dt", { children: "\u{1F5C2} \u65E7\u7248 JSONL \u5907\u4EFD\u4F4D\u7F6E" }),
-      /* @__PURE__ */ jsx2("dd", { children: /* @__PURE__ */ jsx2("code", { children: result?.backupDir || "(\u672A\u6267\u884C\u5907\u4EFD)" }) })
+    /* @__PURE__ */ jsxs3("dl", { className: "paths", children: [
+      /* @__PURE__ */ jsx3("dt", { children: "\u{1F4C1} \u65B0\u6587\u4EF6\u4F4D\u7F6E" }),
+      /* @__PURE__ */ jsx3("dd", { children: /* @__PURE__ */ jsx3("code", { children: result?.outDir ?? "(\u672A\u77E5)" }) }),
+      /* @__PURE__ */ jsx3("dt", { children: "\u{1F5C2} \u65E7\u7248 JSONL \u5907\u4EFD\u4F4D\u7F6E" }),
+      /* @__PURE__ */ jsx3("dd", { children: /* @__PURE__ */ jsx3("code", { children: result?.backupDir || "(\u672A\u6267\u884C\u5907\u4EFD)" }) })
     ] }),
-    /* @__PURE__ */ jsxs2("div", { className: "alert warn", children: [
-      /* @__PURE__ */ jsx2("p", { children: /* @__PURE__ */ jsx2("b", { children: "\u26A0\uFE0F \u8BF7\u624B\u52A8\u5C06\u65B0\u7248 JSONL \u590D\u5236\u5230 Codex \u539F\u76EE\u5F55\uFF1A" }) }),
-      /* @__PURE__ */ jsx2("p", { children: /* @__PURE__ */ jsx2("code", { children: "%USERPROFILE%\\.codex\\sessions\\YYYY\\MM\\DD\\" }) }),
-      /* @__PURE__ */ jsx2("p", { className: "muted", children: "\u63D0\u793A\uFF1A\u63D2\u4EF6\u4E0D\u4F1A\u81EA\u52A8\u5199\u5165 Codex \u76EE\u5F55\uFF0C\u4EE5\u514D\u8986\u76D6\u6B63\u5728\u8FDB\u884C\u7684\u4F1A\u8BDD\u3002" })
+    /* @__PURE__ */ jsxs3("div", { className: "alert warn", children: [
+      /* @__PURE__ */ jsx3("p", { children: /* @__PURE__ */ jsx3("b", { children: "\u26A0\uFE0F \u8BF7\u624B\u52A8\u5C06\u65B0\u7248 JSONL \u590D\u5236\u5230 Codex \u539F\u76EE\u5F55\uFF1A" }) }),
+      /* @__PURE__ */ jsx3("p", { children: /* @__PURE__ */ jsx3("code", { children: "%USERPROFILE%\\.codex\\sessions\\YYYY\\MM\\DD\\" }) }),
+      /* @__PURE__ */ jsx3("p", { className: "muted", children: "\u63D0\u793A\uFF1A\u63D2\u4EF6\u4E0D\u4F1A\u81EA\u52A8\u5199\u5165 Codex \u76EE\u5F55\uFF0C\u4EE5\u514D\u8986\u76D6\u6B63\u5728\u8FDB\u884C\u7684\u4F1A\u8BDD\u3002" })
     ] }),
-    /* @__PURE__ */ jsxs2("div", { className: "alert info", children: [
-      /* @__PURE__ */ jsx2("p", { children: /* @__PURE__ */ jsx2("b", { children: "\u{1F4CC} \u590D\u5236\u5B8C\u6210\u540E\uFF0C\u8FD8\u9700\u8981\u300C\u6CE8\u518C\u7D22\u5F15\u300DCodex \u624D\u80FD\u770B\u5230\uFF1A" }) }),
-      /* @__PURE__ */ jsx2("p", { className: "muted", children: "Codex \u7684\u4F1A\u8BDD\u5217\u8868\u8BFB\u5B83\u81EA\u5DF1\u7684\u7D22\u5F15\u6570\u636E\u5E93\uFF0C\u4E0D\u626B\u63CF\u76EE\u5F55\u3002\u628A\u6587\u4EF6\u590D\u5236\u8FDB\u53BB\u540E\uFF0C\u70B9\u4E0B\u9762\u7684\u6309\u94AE\u628A\u65B0\u4F1A\u8BDD\u767B\u8BB0\u8FDB\u7D22\u5F15\u3002 \uFF08\u5EFA\u8BAE\u5148\u5173\u95ED Codex\uFF0C\u6CE8\u518C\u540E\u91CD\u65B0\u6253\u5F00\u3002\uFF09" }),
-      /* @__PURE__ */ jsxs2("div", { style: { marginTop: 8 }, children: [
-        /* @__PURE__ */ jsx2(
+    /* @__PURE__ */ jsxs3("div", { className: "alert info", children: [
+      /* @__PURE__ */ jsx3("p", { children: /* @__PURE__ */ jsx3("b", { children: "\u{1F4CC} \u590D\u5236\u5B8C\u6210\u540E\uFF0C\u8FD8\u9700\u8981\u300C\u6CE8\u518C\u7D22\u5F15\u300DCodex \u624D\u80FD\u770B\u5230\uFF1A" }) }),
+      /* @__PURE__ */ jsx3("p", { className: "muted", children: "Codex \u7684\u4F1A\u8BDD\u5217\u8868\u8BFB\u5B83\u81EA\u5DF1\u7684\u7D22\u5F15\u6570\u636E\u5E93\uFF0C\u4E0D\u626B\u63CF\u76EE\u5F55\u3002\u628A\u6587\u4EF6\u590D\u5236\u8FDB\u53BB\u540E\uFF0C\u70B9\u4E0B\u9762\u7684\u6309\u94AE\u628A\u65B0\u4F1A\u8BDD\u767B\u8BB0\u8FDB\u7D22\u5F15\u3002 \uFF08\u5EFA\u8BAE\u5148\u5173\u95ED Codex\uFF0C\u6CE8\u518C\u540E\u91CD\u65B0\u6253\u5F00\u3002\uFF09" }),
+      /* @__PURE__ */ jsxs3("div", { style: { marginTop: 8 }, children: [
+        /* @__PURE__ */ jsx3(
           "button",
           {
             className: "primary",
@@ -627,7 +762,7 @@ function ExportDialog({ apiBase, onBack }) {
             children: registering ? "\u6CE8\u518C\u4E2D\u2026" : registerState === "done" ? "\u2705 \u5DF2\u6CE8\u518C" : "\u6CE8\u518C\u5230 Codex \u7D22\u5F15"
           }
         ),
-        registerResult && /* @__PURE__ */ jsxs2("span", { style: { marginLeft: 12, fontSize: 12 }, children: [
+        registerResult && /* @__PURE__ */ jsxs3("span", { style: { marginLeft: 12, fontSize: 12 }, children: [
           "\u65B0\u6CE8\u518C ",
           registerResult.registered?.length ?? 0,
           " \u4E2A\uFF0C\u5DF2\u5B58\u5728 ",
@@ -636,34 +771,34 @@ function ExportDialog({ apiBase, onBack }) {
           registerResult.failed?.length ? `\uFF0C\u5931\u8D25 ${registerResult.failed.length} \u4E2A` : ""
         ] })
       ] }),
-      registerError && /* @__PURE__ */ jsxs2("p", { style: { color: "#e66", fontSize: 12 }, children: [
+      registerError && /* @__PURE__ */ jsxs3("p", { style: { color: "#e66", fontSize: 12 }, children: [
         "\u6CE8\u518C\u5931\u8D25\uFF1A",
         registerError
       ] })
     ] }),
-    /* @__PURE__ */ jsxs2("table", { className: "sessions", children: [
-      /* @__PURE__ */ jsx2("thead", { children: /* @__PURE__ */ jsxs2("tr", { children: [
-        /* @__PURE__ */ jsx2("th", { children: "\u7ED3\u679C" }),
-        /* @__PURE__ */ jsx2("th", { children: "\u4F1A\u8BDD" }),
-        /* @__PURE__ */ jsx2("th", { children: "\u884C\u6570" }),
-        /* @__PURE__ */ jsx2("th", { children: "\u6D88\u606F" }),
-        /* @__PURE__ */ jsx2("th", { children: "\u5DE5\u5177\u8C03\u7528" }),
-        /* @__PURE__ */ jsx2("th", { children: "\u5927\u5C0F" }),
-        /* @__PURE__ */ jsx2("th", { children: "\u8BF4\u660E" })
+    /* @__PURE__ */ jsxs3("table", { className: "sessions", children: [
+      /* @__PURE__ */ jsx3("thead", { children: /* @__PURE__ */ jsxs3("tr", { children: [
+        /* @__PURE__ */ jsx3("th", { children: "\u7ED3\u679C" }),
+        /* @__PURE__ */ jsx3("th", { children: "\u4F1A\u8BDD" }),
+        /* @__PURE__ */ jsx3("th", { children: "\u884C\u6570" }),
+        /* @__PURE__ */ jsx3("th", { children: "\u6D88\u606F" }),
+        /* @__PURE__ */ jsx3("th", { children: "\u5DE5\u5177\u8C03\u7528" }),
+        /* @__PURE__ */ jsx3("th", { children: "\u5927\u5C0F" }),
+        /* @__PURE__ */ jsx3("th", { children: "\u8BF4\u660E" })
       ] }) }),
-      /* @__PURE__ */ jsx2("tbody", { children: (result?.results ?? []).map((r, i) => /* @__PURE__ */ jsxs2("tr", { children: [
-        /* @__PURE__ */ jsx2("td", { children: r.report?.ok ? "\u2705" : "\u274C" }),
-        /* @__PURE__ */ jsx2("td", { title: r.sourceSessionId, children: r.sourceSessionId }),
-        /* @__PURE__ */ jsx2("td", { children: r.report?.stats.lines ?? 0 }),
-        /* @__PURE__ */ jsx2("td", { children: r.report?.stats.messages ?? 0 }),
-        /* @__PURE__ */ jsx2("td", { children: r.report?.stats.toolCalls ?? 0 }),
-        /* @__PURE__ */ jsx2("td", { children: formatBytes(r.report?.stats.bytes ?? 0) }),
-        /* @__PURE__ */ jsx2("td", { className: "reason", children: r.report?.error?.message ?? (r.report?.warnings?.[0] ?? "\u2014") })
+      /* @__PURE__ */ jsx3("tbody", { children: (result?.results ?? []).map((r, i) => /* @__PURE__ */ jsxs3("tr", { children: [
+        /* @__PURE__ */ jsx3("td", { children: r.report?.ok ? "\u2705" : "\u274C" }),
+        /* @__PURE__ */ jsx3("td", { title: r.sourceSessionId, children: r.sourceSessionId }),
+        /* @__PURE__ */ jsx3("td", { children: r.report?.stats.lines ?? 0 }),
+        /* @__PURE__ */ jsx3("td", { children: r.report?.stats.messages ?? 0 }),
+        /* @__PURE__ */ jsx3("td", { children: r.report?.stats.toolCalls ?? 0 }),
+        /* @__PURE__ */ jsx3("td", { children: formatBytes(r.report?.stats.bytes ?? 0) }),
+        /* @__PURE__ */ jsx3("td", { className: "reason", children: r.report?.error?.message ?? (r.report?.warnings?.[0] ?? "\u2014") })
       ] }, i)) })
     ] }),
-    /* @__PURE__ */ jsxs2("div", { className: "dialog-footer", children: [
-      /* @__PURE__ */ jsx2("div", {}),
-      /* @__PURE__ */ jsx2("button", { className: "primary", onClick: onBack, children: "\u5B8C\u6210" })
+    /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
+      /* @__PURE__ */ jsx3("div", {}),
+      /* @__PURE__ */ jsx3("button", { className: "primary", onClick: onBack, children: "\u5B8C\u6210" })
     ] })
   ] });
 }
@@ -685,7 +820,7 @@ function TransferDialog({ apiBase, onBack }) {
   const [losses, setLosses] = useState3([]);
   const [result, setResult] = useState3(null);
   const [preview, setPreview] = useState3(null);
-  const [budget, setBudget] = useState3(2e5);
+  const [budgetValue, setBudgetValue] = useState3(DEFAULT_BUDGET_VALUE);
   const loadClients = useCallback3(async () => {
     setPhase("loading");
     setError(null);
@@ -741,7 +876,7 @@ function TransferDialog({ apiBase, onBack }) {
       }
     })();
   }, [apiBase, source, target]);
-  const visible = useMemo3(
+  const visible = useMemo4(
     () => sessions.filter((s) => !keyword || s.title.toLowerCase().includes(keyword.toLowerCase()) || s.cwd.toLowerCase().includes(keyword.toLowerCase())).sort((a, b) => b.updatedAt - a.updatedAt),
     [sessions, keyword]
   );
@@ -769,10 +904,13 @@ function TransferDialog({ apiBase, onBack }) {
     setPhase("running");
     setError(null);
     try {
+      const body = { client: source, sessionId: selected };
+      if (budgetValue.mode === "custom") body.budget = budgetValue.custom;
+      else if (budgetValue.model) body.model = budgetValue.model;
       const r = await fetch(`${apiBase}/context/preview`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ client: source, sessionId: selected, budget })
+        body: JSON.stringify(body)
       });
       const d = await r.json();
       if (!d.ok) throw new Error(d.message ?? "\u9884\u89C8\u5931\u8D25");
@@ -784,84 +922,84 @@ function TransferDialog({ apiBase, onBack }) {
     }
   };
   if (phase === "loading") {
-    return /* @__PURE__ */ jsxs3("div", { className: "dialog", children: [
-      /* @__PURE__ */ jsx3("h3", { children: "\u8DE8\u7AEF\u8F6C\u6362" }),
-      /* @__PURE__ */ jsx3("p", { children: "\u6B63\u5728\u63A2\u6D4B\u5BA2\u6237\u7AEF\u2026" }),
-      /* @__PURE__ */ jsx3("div", { className: "spinner" })
+    return /* @__PURE__ */ jsxs4("div", { className: "dialog", children: [
+      /* @__PURE__ */ jsx4("h3", { children: "\u8DE8\u7AEF\u8F6C\u6362" }),
+      /* @__PURE__ */ jsx4("p", { children: "\u6B63\u5728\u63A2\u6D4B\u5BA2\u6237\u7AEF\u2026" }),
+      /* @__PURE__ */ jsx4("div", { className: "spinner" })
     ] });
   }
   if (phase === "running") {
-    return /* @__PURE__ */ jsxs3("div", { className: "dialog", children: [
-      /* @__PURE__ */ jsx3("h3", { children: "\u5904\u7406\u4E2D\u2026" }),
-      /* @__PURE__ */ jsx3("p", { children: "\u6B63\u5728\u8BFB\u53D6\u5E76\u8F6C\u6362\u4F1A\u8BDD\uFF0C\u8BF7\u7A0D\u5019\u3002" }),
-      /* @__PURE__ */ jsx3("div", { className: "spinner" })
+    return /* @__PURE__ */ jsxs4("div", { className: "dialog", children: [
+      /* @__PURE__ */ jsx4("h3", { children: "\u5904\u7406\u4E2D\u2026" }),
+      /* @__PURE__ */ jsx4("p", { children: "\u6B63\u5728\u8BFB\u53D6\u5E76\u8F6C\u6362\u4F1A\u8BDD\uFF0C\u8BF7\u7A0D\u5019\u3002" }),
+      /* @__PURE__ */ jsx4("div", { className: "spinner" })
     ] });
   }
   if (phase === "error") {
-    return /* @__PURE__ */ jsxs3("div", { className: "dialog", children: [
-      /* @__PURE__ */ jsx3("h3", { children: "\u64CD\u4F5C\u5931\u8D25" }),
-      /* @__PURE__ */ jsx3("div", { className: "alert error", children: error }),
-      /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
-        /* @__PURE__ */ jsx3("div", {}),
-        /* @__PURE__ */ jsxs3("div", { children: [
-          /* @__PURE__ */ jsx3("button", { onClick: onBack, children: "\u8FD4\u56DE" }),
-          /* @__PURE__ */ jsx3("button", { className: "primary", onClick: loadClients, children: "\u91CD\u8BD5" })
+    return /* @__PURE__ */ jsxs4("div", { className: "dialog", children: [
+      /* @__PURE__ */ jsx4("h3", { children: "\u64CD\u4F5C\u5931\u8D25" }),
+      /* @__PURE__ */ jsx4("div", { className: "alert error", children: error }),
+      /* @__PURE__ */ jsxs4("div", { className: "dialog-footer", children: [
+        /* @__PURE__ */ jsx4("div", {}),
+        /* @__PURE__ */ jsxs4("div", { children: [
+          /* @__PURE__ */ jsx4("button", { onClick: onBack, children: "\u8FD4\u56DE" }),
+          /* @__PURE__ */ jsx4("button", { className: "primary", onClick: loadClients, children: "\u91CD\u8BD5" })
         ] })
       ] })
     ] });
   }
   if (phase === "done" && result) {
-    return /* @__PURE__ */ jsxs3("div", { className: "dialog wide", children: [
-      /* @__PURE__ */ jsx3("h3", { children: "\u8F6C\u6362\u5B8C\u6210" }),
-      /* @__PURE__ */ jsxs3("div", { className: "alert success", children: [
+    return /* @__PURE__ */ jsxs4("div", { className: "dialog wide", children: [
+      /* @__PURE__ */ jsx4("h3", { children: "\u8F6C\u6362\u5B8C\u6210" }),
+      /* @__PURE__ */ jsxs4("div", { className: "alert success", children: [
         "\u2705 \u5DF2\u4ECE ",
-        /* @__PURE__ */ jsx3("b", { children: result.source?.client }),
+        /* @__PURE__ */ jsx4("b", { children: result.source?.client }),
         " \u8F6C\u6362\u5230 ",
-        /* @__PURE__ */ jsx3("b", { children: result.target?.client })
+        /* @__PURE__ */ jsx4("b", { children: result.target?.client })
       ] }),
-      /* @__PURE__ */ jsxs3("table", { className: "sessions", children: [
-        /* @__PURE__ */ jsx3("thead", { children: /* @__PURE__ */ jsxs3("tr", { children: [
-          /* @__PURE__ */ jsx3("th", { children: "\u9879\u76EE" }),
-          /* @__PURE__ */ jsx3("th", { children: "\u503C" })
+      /* @__PURE__ */ jsxs4("table", { className: "sessions", children: [
+        /* @__PURE__ */ jsx4("thead", { children: /* @__PURE__ */ jsxs4("tr", { children: [
+          /* @__PURE__ */ jsx4("th", { children: "\u9879\u76EE" }),
+          /* @__PURE__ */ jsx4("th", { children: "\u503C" })
         ] }) }),
-        /* @__PURE__ */ jsxs3("tbody", { children: [
-          /* @__PURE__ */ jsxs3("tr", { children: [
-            /* @__PURE__ */ jsx3("td", { children: "\u6E90\u4F1A\u8BDD" }),
-            /* @__PURE__ */ jsxs3("td", { children: [
+        /* @__PURE__ */ jsxs4("tbody", { children: [
+          /* @__PURE__ */ jsxs4("tr", { children: [
+            /* @__PURE__ */ jsx4("td", { children: "\u6E90\u4F1A\u8BDD" }),
+            /* @__PURE__ */ jsxs4("td", { children: [
               result.source?.title,
               "\uFF08",
               result.source?.turns,
               " \u8F6E\uFF09"
             ] })
           ] }),
-          /* @__PURE__ */ jsxs3("tr", { children: [
-            /* @__PURE__ */ jsx3("td", { children: "\u76EE\u6807 ID" }),
-            /* @__PURE__ */ jsx3("td", { className: "path", children: result.target?.id })
+          /* @__PURE__ */ jsxs4("tr", { children: [
+            /* @__PURE__ */ jsx4("td", { children: "\u76EE\u6807 ID" }),
+            /* @__PURE__ */ jsx4("td", { className: "path", children: result.target?.id })
           ] }),
-          /* @__PURE__ */ jsxs3("tr", { children: [
-            /* @__PURE__ */ jsx3("td", { children: "\u5199\u5165\u4F4D\u7F6E" }),
-            /* @__PURE__ */ jsx3("td", { className: "path", children: result.target?.location })
+          /* @__PURE__ */ jsxs4("tr", { children: [
+            /* @__PURE__ */ jsx4("td", { children: "\u5199\u5165\u4F4D\u7F6E" }),
+            /* @__PURE__ */ jsx4("td", { className: "path", children: result.target?.location })
           ] }),
-          /* @__PURE__ */ jsxs3("tr", { children: [
-            /* @__PURE__ */ jsx3("td", { children: "\u8BB0\u5F55\u6570" }),
-            /* @__PURE__ */ jsx3("td", { children: result.target?.records })
+          /* @__PURE__ */ jsxs4("tr", { children: [
+            /* @__PURE__ */ jsx4("td", { children: "\u8BB0\u5F55\u6570" }),
+            /* @__PURE__ */ jsx4("td", { children: result.target?.records })
           ] })
         ] })
       ] }),
-      result.warnings?.length > 0 && /* @__PURE__ */ jsxs3("div", { className: "alert info", children: [
-        /* @__PURE__ */ jsx3("p", { children: /* @__PURE__ */ jsx3("b", { children: "\u63D0\u793A\uFF1A" }) }),
-        /* @__PURE__ */ jsx3("ul", { children: result.warnings.map((w, i) => /* @__PURE__ */ jsx3("li", { children: w }, i)) })
+      result.warnings?.length > 0 && /* @__PURE__ */ jsxs4("div", { className: "alert info", children: [
+        /* @__PURE__ */ jsx4("p", { children: /* @__PURE__ */ jsx4("b", { children: "\u63D0\u793A\uFF1A" }) }),
+        /* @__PURE__ */ jsx4("ul", { children: result.warnings.map((w, i) => /* @__PURE__ */ jsx4("li", { children: w }, i)) })
       ] }),
-      /* @__PURE__ */ jsx3("div", { className: "alert warn", children: /* @__PURE__ */ jsxs3("p", { children: [
+      /* @__PURE__ */ jsx4("div", { className: "alert warn", children: /* @__PURE__ */ jsxs4("p", { children: [
         "\u5982\u9700\u5728\u76EE\u6807\u5BA2\u6237\u7AEF\u770B\u5230\u8BE5\u4F1A\u8BDD\uFF0C\u53EF\u80FD\u9700\u8981",
-        /* @__PURE__ */ jsx3("b", { children: "\u91CD\u542F\u76EE\u6807\u5BA2\u6237\u7AEF" }),
+        /* @__PURE__ */ jsx4("b", { children: "\u91CD\u542F\u76EE\u6807\u5BA2\u6237\u7AEF" }),
         "\uFF08\u5B83\u53EA\u5728\u542F\u52A8\u65F6\u8BFB\u7D22\u5F15\uFF09\u3002"
       ] }) }),
-      /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
-        /* @__PURE__ */ jsx3("div", {}),
-        /* @__PURE__ */ jsxs3("div", { children: [
-          /* @__PURE__ */ jsx3("button", { onClick: onBack, children: "\u5B8C\u6210" }),
-          /* @__PURE__ */ jsx3("button", { onClick: () => {
+      /* @__PURE__ */ jsxs4("div", { className: "dialog-footer", children: [
+        /* @__PURE__ */ jsx4("div", {}),
+        /* @__PURE__ */ jsxs4("div", { children: [
+          /* @__PURE__ */ jsx4("button", { onClick: onBack, children: "\u5B8C\u6210" }),
+          /* @__PURE__ */ jsx4("button", { onClick: () => {
             setResult(null);
             setPhase("pick");
           }, children: "\u518D\u8F6C\u4E00\u4E2A" })
@@ -870,23 +1008,23 @@ function TransferDialog({ apiBase, onBack }) {
     ] });
   }
   if (phase === "preview" && preview) {
-    return /* @__PURE__ */ jsxs3("div", { className: "dialog wide", children: [
-      /* @__PURE__ */ jsx3("h3", { children: "\u4E0A\u4E0B\u6587\u9884\u89C8" }),
-      /* @__PURE__ */ jsxs3("div", { className: "alert info", children: [
-        /* @__PURE__ */ jsxs3("p", { children: [
-          /* @__PURE__ */ jsx3("b", { children: preview.session?.title }),
+    return /* @__PURE__ */ jsxs4("div", { className: "dialog wide", children: [
+      /* @__PURE__ */ jsx4("h3", { children: "\u4E0A\u4E0B\u6587\u9884\u89C8" }),
+      /* @__PURE__ */ jsxs4("div", { className: "alert info", children: [
+        /* @__PURE__ */ jsxs4("p", { children: [
+          /* @__PURE__ */ jsx4("b", { children: preview.session?.title }),
           "\uFF08",
           preview.session?.turns,
           " \u8F6E\uFF09"
         ] }),
-        /* @__PURE__ */ jsx3("p", { style: { fontSize: 12, whiteSpace: "pre-wrap" }, children: preview.statsText })
+        /* @__PURE__ */ jsx4("p", { style: { fontSize: 12, whiteSpace: "pre-wrap" }, children: preview.statsText })
       ] }),
-      /* @__PURE__ */ jsx3("div", { style: { maxHeight: 400, overflow: "auto", border: "1px solid #333", padding: 12, borderRadius: 6 }, children: /* @__PURE__ */ jsx3("pre", { style: { whiteSpace: "pre-wrap", fontSize: 12, margin: 0 }, children: preview.context }) }),
-      /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
-        /* @__PURE__ */ jsx3("div", {}),
-        /* @__PURE__ */ jsxs3("div", { children: [
-          /* @__PURE__ */ jsx3("button", { onClick: () => setPhase("pick"), children: "\u8FD4\u56DE" }),
-          /* @__PURE__ */ jsx3(
+      /* @__PURE__ */ jsx4("div", { style: { maxHeight: 400, overflow: "auto", border: "1px solid #333", padding: 12, borderRadius: 6 }, children: /* @__PURE__ */ jsx4("pre", { style: { whiteSpace: "pre-wrap", fontSize: 12, margin: 0 }, children: preview.context }) }),
+      /* @__PURE__ */ jsxs4("div", { className: "dialog-footer", children: [
+        /* @__PURE__ */ jsx4("div", {}),
+        /* @__PURE__ */ jsxs4("div", { children: [
+          /* @__PURE__ */ jsx4("button", { onClick: () => setPhase("pick"), children: "\u8FD4\u56DE" }),
+          /* @__PURE__ */ jsx4(
             "button",
             {
               className: "primary",
@@ -909,23 +1047,23 @@ function TransferDialog({ apiBase, onBack }) {
   const detected = clients.filter((c) => c.detected);
   const targetOptions = caps.filter((c) => c.canWrite && clients.some((x) => x.kind === c.client && x.detected));
   const selectedSession = sessions.find((s) => s.id === selected);
-  return /* @__PURE__ */ jsxs3("div", { className: "dialog wide", children: [
-    /* @__PURE__ */ jsx3("h3", { children: "\u8DE8\u7AEF\u8F6C\u6362" }),
-    /* @__PURE__ */ jsxs3("div", { className: "cb-chips", children: [
-      detected.length === 0 && /* @__PURE__ */ jsx3("span", { className: "muted", children: "\u672A\u68C0\u6D4B\u5230\u4EFB\u4F55\u5BA2\u6237\u7AEF" }),
-      detected.map((c) => /* @__PURE__ */ jsxs3("span", { className: "cb-badge cb-badge-ok", children: [
-        /* @__PURE__ */ jsx3("span", { className: "cb-dot" }),
+  return /* @__PURE__ */ jsxs4("div", { className: "dialog wide", children: [
+    /* @__PURE__ */ jsx4("h3", { children: "\u8DE8\u7AEF\u8F6C\u6362" }),
+    /* @__PURE__ */ jsxs4("div", { className: "cb-chips", children: [
+      detected.length === 0 && /* @__PURE__ */ jsx4("span", { className: "muted", children: "\u672A\u68C0\u6D4B\u5230\u4EFB\u4F55\u5BA2\u6237\u7AEF" }),
+      detected.map((c) => /* @__PURE__ */ jsxs4("span", { className: "cb-badge cb-badge-ok", children: [
+        /* @__PURE__ */ jsx4("span", { className: "cb-dot" }),
         c.label,
         c.sessionCount != null ? ` \xB7 ${c.sessionCount}` : ""
       ] }, c.kind))
     ] }),
-    /* @__PURE__ */ jsxs3("div", { className: "cb-card", children: [
-      /* @__PURE__ */ jsx3("div", { className: "cb-card-head", children: /* @__PURE__ */ jsx3("span", { className: "cb-card-title", children: "\u8F6C\u6362\u65B9\u5411" }) }),
-      /* @__PURE__ */ jsxs3("div", { className: "cb-card-body", children: [
-        /* @__PURE__ */ jsxs3("div", { className: "filters", style: { gap: 12, alignItems: "flex-end" }, children: [
-          /* @__PURE__ */ jsxs3("label", { style: { flex: "1 1 200px" }, children: [
+    /* @__PURE__ */ jsxs4("div", { className: "cb-card", children: [
+      /* @__PURE__ */ jsx4("div", { className: "cb-card-head", children: /* @__PURE__ */ jsx4("span", { className: "cb-card-title", children: "\u8F6C\u6362\u65B9\u5411" }) }),
+      /* @__PURE__ */ jsxs4("div", { className: "cb-card-body", children: [
+        /* @__PURE__ */ jsxs4("div", { className: "filters", style: { gap: 12, alignItems: "flex-end" }, children: [
+          /* @__PURE__ */ jsxs4("label", { style: { flex: "1 1 200px" }, children: [
             "\u6E90\uFF08\u4ECE\u8FD9\u91CC\u8BFB\uFF09",
-            /* @__PURE__ */ jsxs3(
+            /* @__PURE__ */ jsxs4(
               "select",
               {
                 style: { flex: 1 },
@@ -936,8 +1074,8 @@ function TransferDialog({ apiBase, onBack }) {
                   setTarget("");
                 },
                 children: [
-                  /* @__PURE__ */ jsx3("option", { value: "", children: "\u8BF7\u9009\u62E9" }),
-                  detected.filter((c) => c.canRead).map((c) => /* @__PURE__ */ jsxs3("option", { value: c.kind, children: [
+                  /* @__PURE__ */ jsx4("option", { value: "", children: "\u8BF7\u9009\u62E9" }),
+                  detected.filter((c) => c.canRead).map((c) => /* @__PURE__ */ jsxs4("option", { value: c.kind, children: [
                     c.label,
                     c.sessionCount != null ? `\uFF08${c.sessionCount}\uFF09` : ""
                   ] }, c.kind))
@@ -945,10 +1083,10 @@ function TransferDialog({ apiBase, onBack }) {
               }
             )
           ] }),
-          /* @__PURE__ */ jsx3("span", { style: { fontSize: 16, paddingBottom: 6, opacity: 0.5 }, children: "\u2192" }),
-          /* @__PURE__ */ jsxs3("label", { style: { flex: "1 1 200px" }, children: [
+          /* @__PURE__ */ jsx4("span", { style: { fontSize: 16, paddingBottom: 6, opacity: 0.5 }, children: "\u2192" }),
+          /* @__PURE__ */ jsxs4("label", { style: { flex: "1 1 200px" }, children: [
             "\u76EE\u6807\uFF08\u5199\u5230\u8FD9\u91CC\uFF09",
-            /* @__PURE__ */ jsxs3(
+            /* @__PURE__ */ jsxs4(
               "select",
               {
                 style: { flex: 1 },
@@ -956,8 +1094,8 @@ function TransferDialog({ apiBase, onBack }) {
                 onChange: (e) => setTarget(e.target.value),
                 disabled: !source,
                 children: [
-                  /* @__PURE__ */ jsx3("option", { value: "", children: source ? "\u8BF7\u9009\u62E9" : "\u8BF7\u5148\u9009\u6E90" }),
-                  targetOptions.filter((c) => c.client !== source).map((c) => /* @__PURE__ */ jsxs3("option", { value: c.client, children: [
+                  /* @__PURE__ */ jsx4("option", { value: "", children: source ? "\u8BF7\u9009\u62E9" : "\u8BF7\u5148\u9009\u6E90" }),
+                  targetOptions.filter((c) => c.client !== source).map((c) => /* @__PURE__ */ jsxs4("option", { value: c.client, children: [
                     c.label,
                     c.client === "dsh" ? "\uFF08DSH \u4E3B\u7A0B\u5E8F\uFF09" : ""
                   ] }, c.client))
@@ -966,87 +1104,85 @@ function TransferDialog({ apiBase, onBack }) {
             )
           ] })
         ] }),
-        source && /* @__PURE__ */ jsx3("div", { className: "cb-row-hint", style: { marginTop: 2 }, children: target ? /* @__PURE__ */ jsxs3(Fragment, { children: [
+        source && /* @__PURE__ */ jsx4("div", { className: "cb-row-hint", style: { marginTop: 2 }, children: target ? /* @__PURE__ */ jsxs4(Fragment, { children: [
           "\u5C06\u628A ",
-          /* @__PURE__ */ jsx3("b", { style: { color: "var(--cb-text)" }, children: clients.find((c) => c.kind === source)?.label }),
+          /* @__PURE__ */ jsx4("b", { style: { color: "var(--cb-text)" }, children: clients.find((c) => c.kind === source)?.label }),
           " \u7684\u4F1A\u8BDD\u8F6C\u6362\u5230 ",
-          /* @__PURE__ */ jsx3("b", { style: { color: "var(--cb-accent)" }, children: caps.find((c) => c.client === target)?.label })
-        ] }) : /* @__PURE__ */ jsxs3(Fragment, { children: [
+          /* @__PURE__ */ jsx4("b", { style: { color: "var(--cb-accent)" }, children: caps.find((c) => c.client === target)?.label })
+        ] }) : /* @__PURE__ */ jsxs4(Fragment, { children: [
           "\u5DF2\u9009\u6E90\u7AEF ",
-          /* @__PURE__ */ jsx3("b", { style: { color: "var(--cb-text)" }, children: clients.find((c) => c.kind === source)?.label }),
+          /* @__PURE__ */ jsx4("b", { style: { color: "var(--cb-text)" }, children: clients.find((c) => c.kind === source)?.label }),
           "\uFF0C\u8BF7\u9009\u62E9\u76EE\u6807\uFF08\u53EF\u9009 ",
           targetOptions.filter((c) => c.client !== source).length,
           " \u9879\uFF09"
         ] }) })
       ] })
     ] }),
-    losses.length > 0 && /* @__PURE__ */ jsxs3("div", { className: "alert warn", children: [
-      /* @__PURE__ */ jsx3("p", { children: /* @__PURE__ */ jsx3("b", { children: "\u8F6C\u6362\u4F1A\u4E22\u5931\u4EE5\u4E0B\u4FE1\u606F" }) }),
-      /* @__PURE__ */ jsx3("ul", { children: losses.map((l, i) => /* @__PURE__ */ jsx3("li", { children: l }, i)) })
+    losses.length > 0 && /* @__PURE__ */ jsxs4("div", { className: "alert warn", children: [
+      /* @__PURE__ */ jsx4("p", { children: /* @__PURE__ */ jsx4("b", { children: "\u8F6C\u6362\u4F1A\u4E22\u5931\u4EE5\u4E0B\u4FE1\u606F" }) }),
+      /* @__PURE__ */ jsx4("ul", { children: losses.map((l, i) => /* @__PURE__ */ jsx4("li", { children: l }, i)) })
     ] }),
-    /* @__PURE__ */ jsxs3("div", { className: "cb-card", children: [
-      /* @__PURE__ */ jsxs3("div", { className: "cb-card-head", children: [
-        /* @__PURE__ */ jsxs3("span", { className: "cb-card-title", children: [
+    /* @__PURE__ */ jsxs4("div", { className: "cb-card", children: [
+      /* @__PURE__ */ jsxs4("div", { className: "cb-card-head", children: [
+        /* @__PURE__ */ jsxs4("span", { className: "cb-card-title", children: [
           "\u9009\u62E9\u4F1A\u8BDD",
-          visible.length > 0 && /* @__PURE__ */ jsx3("span", { className: "cb-badge", children: visible.length })
+          visible.length > 0 && /* @__PURE__ */ jsx4("span", { className: "cb-badge", children: visible.length })
         ] }),
-        /* @__PURE__ */ jsx3("button", { className: "cb-btn-ghost cb-btn-sm", onClick: () => {
+        /* @__PURE__ */ jsx4("button", { className: "cb-btn-ghost cb-btn-sm", onClick: () => {
           const s = source;
           setSource("");
           setTimeout(() => setSource(s), 0);
         }, children: "\u5237\u65B0" })
       ] }),
-      /* @__PURE__ */ jsxs3("div", { className: "cb-card-body", style: { padding: 0 }, children: [
-        /* @__PURE__ */ jsx3("div", { className: "filters", style: { padding: "10px 14px" }, children: /* @__PURE__ */ jsx3("input", { placeholder: "\u6309\u6807\u9898\u6216\u8DEF\u5F84\u7B5B\u9009\u2026", value: keyword, onChange: (e) => setKeyword(e.target.value) }) }),
-        /* @__PURE__ */ jsx3("div", { className: "cb-table-wrap", style: { border: "none", borderRadius: 0, maxHeight: 320, overflow: "auto" }, children: /* @__PURE__ */ jsxs3("table", { className: "sessions", children: [
-          /* @__PURE__ */ jsx3("thead", { children: /* @__PURE__ */ jsxs3("tr", { children: [
-            /* @__PURE__ */ jsx3("th", { style: { width: 32 } }),
-            /* @__PURE__ */ jsx3("th", { children: "\u6807\u9898" }),
-            /* @__PURE__ */ jsx3("th", { children: "\u4F1A\u8BDD ID" }),
-            /* @__PURE__ */ jsx3("th", { children: "\u8F6E\u6B21" }),
-            /* @__PURE__ */ jsx3("th", { children: "\u66F4\u65B0" })
+      /* @__PURE__ */ jsxs4("div", { className: "cb-card-body", style: { padding: 0 }, children: [
+        /* @__PURE__ */ jsx4("div", { className: "filters", style: { padding: "10px 14px" }, children: /* @__PURE__ */ jsx4("input", { placeholder: "\u6309\u6807\u9898\u6216\u8DEF\u5F84\u7B5B\u9009\u2026", value: keyword, onChange: (e) => setKeyword(e.target.value) }) }),
+        /* @__PURE__ */ jsx4("div", { className: "cb-table-wrap", style: { border: "none", borderRadius: 0, maxHeight: 320, overflow: "auto" }, children: /* @__PURE__ */ jsxs4("table", { className: "sessions", children: [
+          /* @__PURE__ */ jsx4("thead", { children: /* @__PURE__ */ jsxs4("tr", { children: [
+            /* @__PURE__ */ jsx4("th", { style: { width: 32 } }),
+            /* @__PURE__ */ jsx4("th", { children: "\u6807\u9898" }),
+            /* @__PURE__ */ jsx4("th", { children: "\u4F1A\u8BDD ID" }),
+            /* @__PURE__ */ jsx4("th", { children: "\u8F6E\u6B21" }),
+            /* @__PURE__ */ jsx4("th", { children: "\u66F4\u65B0" })
           ] }) }),
-          /* @__PURE__ */ jsxs3("tbody", { children: [
-            visible.length === 0 && /* @__PURE__ */ jsx3("tr", { children: /* @__PURE__ */ jsx3("td", { colSpan: 5, className: "muted", style: { padding: 16 }, children: "\u8BE5\u5BA2\u6237\u7AEF\u6CA1\u6709\u53EF\u8BFB\u53D6\u7684\u4F1A\u8BDD" }) }),
-            visible.map((s) => /* @__PURE__ */ jsxs3("tr", { className: selected === s.id ? "checked" : "", onClick: () => setSelected(s.id), children: [
-              /* @__PURE__ */ jsx3("td", { children: /* @__PURE__ */ jsx3("input", { type: "radio", checked: selected === s.id, onChange: () => setSelected(s.id) }) }),
-              /* @__PURE__ */ jsx3("td", { title: s.title, children: s.title }),
-              /* @__PURE__ */ jsxs3("td", { className: "path", title: s.id, children: [
+          /* @__PURE__ */ jsxs4("tbody", { children: [
+            visible.length === 0 && /* @__PURE__ */ jsx4("tr", { children: /* @__PURE__ */ jsx4("td", { colSpan: 5, className: "muted", style: { padding: 16 }, children: "\u8BE5\u5BA2\u6237\u7AEF\u6CA1\u6709\u53EF\u8BFB\u53D6\u7684\u4F1A\u8BDD" }) }),
+            visible.map((s) => /* @__PURE__ */ jsxs4("tr", { className: selected === s.id ? "checked" : "", onClick: () => setSelected(s.id), children: [
+              /* @__PURE__ */ jsx4("td", { children: /* @__PURE__ */ jsx4("input", { type: "radio", checked: selected === s.id, onChange: () => setSelected(s.id) }) }),
+              /* @__PURE__ */ jsx4("td", { title: s.title, children: s.title }),
+              /* @__PURE__ */ jsxs4("td", { className: "path", title: s.id, children: [
                 "\u2026",
                 s.id.slice(-8)
               ] }),
-              /* @__PURE__ */ jsx3("td", { children: s.turns ?? "\u2014" }),
-              /* @__PURE__ */ jsx3("td", { children: new Date(s.updatedAt).toLocaleDateString("zh-CN") })
+              /* @__PURE__ */ jsx4("td", { children: s.turns ?? "\u2014" }),
+              /* @__PURE__ */ jsx4("td", { children: new Date(s.updatedAt).toLocaleDateString("zh-CN") })
             ] }, s.id))
           ] })
         ] }) })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs3("div", { className: "cb-card", children: [
-      /* @__PURE__ */ jsx3("div", { className: "cb-card-head", children: /* @__PURE__ */ jsx3("span", { className: "cb-card-title", children: "\u4E0A\u4E0B\u6587\u9884\u89C8" }) }),
-      /* @__PURE__ */ jsx3("div", { className: "cb-card-desc", children: "\u5148\u628A\u4F1A\u8BDD\u538B\u7F29\u6210 Markdown \u770B\u770B\u6548\u679C\uFF0C\u518D\u51B3\u5B9A\u662F\u5426\u8F6C\u6362\u3002" }),
-      /* @__PURE__ */ jsx3("div", { className: "cb-card-body", children: /* @__PURE__ */ jsxs3("div", { className: "filters", children: [
-        /* @__PURE__ */ jsxs3("label", { children: [
-          "\u9884\u7B97",
-          /* @__PURE__ */ jsxs3("select", { value: budget, onChange: (e) => setBudget(Number(e.target.value)), children: [
-            /* @__PURE__ */ jsx3("option", { value: 2e5, children: "200k\uFF08\u9ED8\u8BA4\uFF09" }),
-            /* @__PURE__ */ jsx3("option", { value: 128e3, children: "128k" }),
-            /* @__PURE__ */ jsx3("option", { value: 64e3, children: "64k" }),
-            /* @__PURE__ */ jsx3("option", { value: 32e3, children: "32k" }),
-            /* @__PURE__ */ jsx3("option", { value: 16e3, children: "16k" })
-          ] })
-        ] }),
-        /* @__PURE__ */ jsx3("button", { disabled: !selected, onClick: doPreview, children: "\u9884\u89C8\u538B\u7F29\u4E0A\u4E0B\u6587" })
-      ] }) })
-    ] }),
-    /* @__PURE__ */ jsxs3("div", { className: "dialog-footer", children: [
-      /* @__PURE__ */ jsx3("span", { children: selectedSession ? `\u5DF2\u9009\uFF1A${selectedSession.title.slice(0, 30)}` : "\u8BF7\u9009\u62E9\u8981\u8F6C\u6362\u7684\u4F1A\u8BDD" }),
-      /* @__PURE__ */ jsxs3("div", { children: [
-        /* @__PURE__ */ jsx3("button", { onClick: onBack, children: "\u53D6\u6D88" }),
-        /* @__PURE__ */ jsx3("button", { className: "primary", disabled: !selected || !target, onClick: doTransfer, children: "\u5F00\u59CB\u8F6C\u6362" })
+    /* @__PURE__ */ jsxs4("div", { className: "cb-card", children: [
+      /* @__PURE__ */ jsx4("div", { className: "cb-card-head", children: /* @__PURE__ */ jsx4("span", { className: "cb-card-title", children: "\u4E0A\u4E0B\u6587\u9884\u89C8" }) }),
+      /* @__PURE__ */ jsx4("div", { className: "cb-card-desc", children: "\u5148\u628A\u4F1A\u8BDD\u538B\u7F29\u6210 Markdown \u770B\u770B\u6548\u679C\uFF0C\u518D\u51B3\u5B9A\u662F\u5426\u8F6C\u6362\u3002" }),
+      /* @__PURE__ */ jsxs4("div", { className: "cb-card-body", children: [
+        /* @__PURE__ */ jsx4(
+          BudgetPicker,
+          {
+            value: budgetValue,
+            onChange: setBudgetValue,
+            disabled: !selected
+          }
+        ),
+        /* @__PURE__ */ jsx4("div", { className: "filters", children: /* @__PURE__ */ jsx4("button", { disabled: !selected, onClick: doPreview, children: "\u9884\u89C8\u538B\u7F29\u4E0A\u4E0B\u6587" }) })
       ] })
     ] }),
-    error && /* @__PURE__ */ jsx3("div", { className: "alert error", children: error })
+    /* @__PURE__ */ jsxs4("div", { className: "dialog-footer", children: [
+      /* @__PURE__ */ jsx4("span", { children: selectedSession ? `\u5DF2\u9009\uFF1A${selectedSession.title.slice(0, 30)}` : "\u8BF7\u9009\u62E9\u8981\u8F6C\u6362\u7684\u4F1A\u8BDD" }),
+      /* @__PURE__ */ jsxs4("div", { children: [
+        /* @__PURE__ */ jsx4("button", { onClick: onBack, children: "\u53D6\u6D88" }),
+        /* @__PURE__ */ jsx4("button", { className: "primary", disabled: !selected || !target, onClick: doTransfer, children: "\u5F00\u59CB\u8F6C\u6362" })
+      ] })
+    ] }),
+    error && /* @__PURE__ */ jsx4("div", { className: "alert error", children: error })
   ] });
 }
 
@@ -1079,30 +1215,30 @@ function LogPanel({ apiBase }) {
   useEffect4(() => {
     if (open) void load();
   }, [open, load]);
-  return /* @__PURE__ */ jsxs4("div", { className: "cb-card log-panel", children: [
-    /* @__PURE__ */ jsxs4("div", { className: "cb-card-head", children: [
-      /* @__PURE__ */ jsxs4("span", { className: "cb-card-title", children: [
+  return /* @__PURE__ */ jsxs5("div", { className: "cb-card log-panel", children: [
+    /* @__PURE__ */ jsxs5("div", { className: "cb-card-head", children: [
+      /* @__PURE__ */ jsxs5("span", { className: "cb-card-title", children: [
         "\u64CD\u4F5C\u65E5\u5FD7",
-        logs.length > 0 && /* @__PURE__ */ jsx4("span", { className: "cb-badge", children: logs.length })
+        logs.length > 0 && /* @__PURE__ */ jsx5("span", { className: "cb-badge", children: logs.length })
       ] }),
-      /* @__PURE__ */ jsxs4("div", { style: { display: "flex", gap: 6 }, children: [
-        open && /* @__PURE__ */ jsx4("button", { className: "cb-btn-ghost cb-btn-sm", onClick: load, disabled: loading, children: loading ? "\u5237\u65B0\u4E2D\u2026" : "\u5237\u65B0" }),
-        /* @__PURE__ */ jsx4("button", { className: "cb-btn-ghost cb-btn-sm", onClick: () => setOpen((v) => !v), children: open ? "\u6536\u8D77" : "\u5C55\u5F00" })
+      /* @__PURE__ */ jsxs5("div", { style: { display: "flex", gap: 6 }, children: [
+        open && /* @__PURE__ */ jsx5("button", { className: "cb-btn-ghost cb-btn-sm", onClick: load, disabled: loading, children: loading ? "\u5237\u65B0\u4E2D\u2026" : "\u5237\u65B0" }),
+        /* @__PURE__ */ jsx5("button", { className: "cb-btn-ghost cb-btn-sm", onClick: () => setOpen((v) => !v), children: open ? "\u6536\u8D77" : "\u5C55\u5F00" })
       ] })
     ] }),
-    open && /* @__PURE__ */ jsxs4(Fragment2, { children: [
-      /* @__PURE__ */ jsx4("div", { className: "cb-card-desc", children: "\u6700\u8FD1 100 \u6761\u8BB0\u5F55\uFF08\u5BFC\u5165 / \u5BFC\u51FA / \u5907\u4EFD / \u8F6C\u6362\uFF09" }),
-      /* @__PURE__ */ jsxs4("div", { className: "log-body", children: [
-        logs.length === 0 && /* @__PURE__ */ jsx4("p", { className: "muted", style: { padding: "0 14px" }, children: "\u6682\u65E0\u8BB0\u5F55\u3002" }),
-        logs.map((l) => /* @__PURE__ */ jsxs4("div", { className: "msg", children: [
-          /* @__PURE__ */ jsx4("span", { className: "time", children: new Date(l.at).toLocaleTimeString("zh-CN", { hour12: false }) }),
-          /* @__PURE__ */ jsxs4("span", { className: "op", children: [
+    open && /* @__PURE__ */ jsxs5(Fragment2, { children: [
+      /* @__PURE__ */ jsx5("div", { className: "cb-card-desc", children: "\u6700\u8FD1 100 \u6761\u8BB0\u5F55\uFF08\u5BFC\u5165 / \u5BFC\u51FA / \u5907\u4EFD / \u8F6C\u6362\uFF09" }),
+      /* @__PURE__ */ jsxs5("div", { className: "log-body", children: [
+        logs.length === 0 && /* @__PURE__ */ jsx5("p", { className: "muted", style: { padding: "0 14px" }, children: "\u6682\u65E0\u8BB0\u5F55\u3002" }),
+        logs.map((l) => /* @__PURE__ */ jsxs5("div", { className: "msg", children: [
+          /* @__PURE__ */ jsx5("span", { className: "time", children: new Date(l.at).toLocaleTimeString("zh-CN", { hour12: false }) }),
+          /* @__PURE__ */ jsxs5("span", { className: "op", children: [
             PHASE_ICON[l.phase] ?? "",
             " ",
             OP_LABEL[l.op] ?? l.op
           ] }),
-          /* @__PURE__ */ jsx4("span", { children: l.message }),
-          l.sessionId && /* @__PURE__ */ jsx4("span", { className: "sid", children: String(l.sessionId).slice(0, 8) })
+          /* @__PURE__ */ jsx5("span", { children: l.message }),
+          l.sessionId && /* @__PURE__ */ jsx5("span", { className: "sid", children: String(l.sessionId).slice(0, 8) })
         ] }, l.id))
       ] })
     ] })
@@ -1143,85 +1279,85 @@ function CodexBridgeSettings({ apiBase = "/plugins/dsh-codex-bridge" }) {
   useEffect5(() => {
     loadStatus();
   }, [loadStatus]);
-  if (view === "import") return /* @__PURE__ */ jsx5(ImportDialog, { apiBase, onBack: () => setView("home") });
-  if (view === "export") return /* @__PURE__ */ jsx5(ExportDialog, { apiBase, onBack: () => setView("home") });
-  if (view === "transfer") return /* @__PURE__ */ jsx5(TransferDialog, { apiBase, onBack: () => setView("home") });
+  if (view === "import") return /* @__PURE__ */ jsx6(ImportDialog, { apiBase, onBack: () => setView("home") });
+  if (view === "export") return /* @__PURE__ */ jsx6(ExportDialog, { apiBase, onBack: () => setView("home") });
+  if (view === "transfer") return /* @__PURE__ */ jsx6(TransferDialog, { apiBase, onBack: () => setView("home") });
   const detected = clients.filter((c) => c.detected);
   const missing = clients.filter((c) => !c.detected);
-  return /* @__PURE__ */ jsxs5("div", { className: "codex-bridge-settings", children: [
-    /* @__PURE__ */ jsx5("h2", { children: "\u4F1A\u8BDD\u6865\u63A5" }),
-    /* @__PURE__ */ jsx5("p", { className: "cb-lead", children: "Codex / DeepSeek Harness / Zcode / Claude Code / WorkBuddy \u4E94\u7AEF\u4F1A\u8BDD\u4E92\u901A\u3002" }),
-    error && /* @__PURE__ */ jsx5("div", { className: "alert error", children: error }),
-    /* @__PURE__ */ jsxs5("div", { className: "cb-card", children: [
-      /* @__PURE__ */ jsxs5("div", { className: "cb-card-head", children: [
-        /* @__PURE__ */ jsxs5("span", { className: "cb-card-title", children: [
+  return /* @__PURE__ */ jsxs6("div", { className: "codex-bridge-settings", children: [
+    /* @__PURE__ */ jsx6("h2", { children: "\u4F1A\u8BDD\u6865\u63A5" }),
+    /* @__PURE__ */ jsx6("p", { className: "cb-lead", children: "Codex / DeepSeek Harness / Zcode / Claude Code / WorkBuddy \u4E94\u7AEF\u4F1A\u8BDD\u4E92\u901A\u3002" }),
+    error && /* @__PURE__ */ jsx6("div", { className: "alert error", children: error }),
+    /* @__PURE__ */ jsxs6("div", { className: "cb-card", children: [
+      /* @__PURE__ */ jsxs6("div", { className: "cb-card-head", children: [
+        /* @__PURE__ */ jsxs6("span", { className: "cb-card-title", children: [
           "\u5DF2\u68C0\u6D4B\u5BA2\u6237\u7AEF",
-          /* @__PURE__ */ jsxs5("span", { className: "cb-badge cb-badge-ok", children: [
-            /* @__PURE__ */ jsx5("span", { className: "cb-dot" }),
+          /* @__PURE__ */ jsxs6("span", { className: "cb-badge cb-badge-ok", children: [
+            /* @__PURE__ */ jsx6("span", { className: "cb-dot" }),
             detected.length,
             " / ",
             clients.length || 5
           ] })
         ] }),
-        /* @__PURE__ */ jsx5("button", { className: "cb-btn-ghost cb-btn-sm", onClick: loadStatus, disabled: loading, children: loading ? "\u5237\u65B0\u4E2D\u2026" : "\u5237\u65B0" })
+        /* @__PURE__ */ jsx6("button", { className: "cb-btn-ghost cb-btn-sm", onClick: loadStatus, disabled: loading, children: loading ? "\u5237\u65B0\u4E2D\u2026" : "\u5237\u65B0" })
       ] }),
-      /* @__PURE__ */ jsx5("div", { className: "cb-card-desc", children: "\u81EA\u52A8\u63A2\u6D4B\u672C\u673A\u5B89\u88C5\u7684\u5BA2\u6237\u7AEF\u3002\u53EA\u8BFB\u6807\u8BB0\u8868\u793A\u8BE5\u7AEF\u53EA\u80FD\u8BFB\u53D6\u3001\u4E0D\u80FD\u5199\u5165\u3002" }),
-      /* @__PURE__ */ jsxs5("div", { className: "cb-card-body", children: [
-        clients.length === 0 && /* @__PURE__ */ jsx5("span", { className: "muted", children: "\u6B63\u5728\u63A2\u6D4B\u2026" }),
-        detected.map((c) => /* @__PURE__ */ jsxs5("div", { className: "cb-row", children: [
-          /* @__PURE__ */ jsxs5("div", { className: "cb-row-main", children: [
-            /* @__PURE__ */ jsxs5("div", { className: "cb-row-label", children: [
-              /* @__PURE__ */ jsx5("span", { style: { marginRight: 6, opacity: 0.7 }, children: CLIENT_ICON[c.kind] ?? "\xB7" }),
+      /* @__PURE__ */ jsx6("div", { className: "cb-card-desc", children: "\u81EA\u52A8\u63A2\u6D4B\u672C\u673A\u5B89\u88C5\u7684\u5BA2\u6237\u7AEF\u3002\u53EA\u8BFB\u6807\u8BB0\u8868\u793A\u8BE5\u7AEF\u53EA\u80FD\u8BFB\u53D6\u3001\u4E0D\u80FD\u5199\u5165\u3002" }),
+      /* @__PURE__ */ jsxs6("div", { className: "cb-card-body", children: [
+        clients.length === 0 && /* @__PURE__ */ jsx6("span", { className: "muted", children: "\u6B63\u5728\u63A2\u6D4B\u2026" }),
+        detected.map((c) => /* @__PURE__ */ jsxs6("div", { className: "cb-row", children: [
+          /* @__PURE__ */ jsxs6("div", { className: "cb-row-main", children: [
+            /* @__PURE__ */ jsxs6("div", { className: "cb-row-label", children: [
+              /* @__PURE__ */ jsx6("span", { style: { marginRight: 6, opacity: 0.7 }, children: CLIENT_ICON[c.kind] ?? "\xB7" }),
               c.label
             ] }),
-            /* @__PURE__ */ jsx5("div", { className: "cb-row-hint", title: c.home, children: c.home })
+            /* @__PURE__ */ jsx6("div", { className: "cb-row-hint", title: c.home, children: c.home })
           ] }),
-          /* @__PURE__ */ jsxs5("div", { className: "cb-row-ctrl", children: [
-            c.sessionCount != null && /* @__PURE__ */ jsxs5("span", { className: "cb-badge", children: [
+          /* @__PURE__ */ jsxs6("div", { className: "cb-row-ctrl", children: [
+            c.sessionCount != null && /* @__PURE__ */ jsxs6("span", { className: "cb-badge", children: [
               c.sessionCount,
               " \u4F1A\u8BDD"
             ] }),
-            /* @__PURE__ */ jsxs5("span", { className: `cb-badge ${c.canWrite ? "cb-badge-ok" : ""}`, children: [
-              /* @__PURE__ */ jsx5("span", { className: "cb-dot" }),
+            /* @__PURE__ */ jsxs6("span", { className: `cb-badge ${c.canWrite ? "cb-badge-ok" : ""}`, children: [
+              /* @__PURE__ */ jsx6("span", { className: "cb-dot" }),
               c.canWrite ? "\u53EF\u8BFB\u5199" : "\u53EA\u8BFB"
             ] })
           ] })
         ] }, c.kind)),
-        missing.length > 0 && /* @__PURE__ */ jsx5("div", { className: "cb-row", children: /* @__PURE__ */ jsx5("div", { className: "cb-row-main", children: /* @__PURE__ */ jsxs5("div", { className: "cb-row-hint", children: [
+        missing.length > 0 && /* @__PURE__ */ jsx6("div", { className: "cb-row", children: /* @__PURE__ */ jsx6("div", { className: "cb-row-main", children: /* @__PURE__ */ jsxs6("div", { className: "cb-row-hint", children: [
           "\u672A\u68C0\u6D4B\u5230\uFF1A",
           missing.map((c) => c.label).join("\u3001")
         ] }) }) }),
-        platformNote && /* @__PURE__ */ jsx5("div", { className: "cb-row", children: /* @__PURE__ */ jsx5("div", { className: "cb-row-main", children: /* @__PURE__ */ jsx5("div", { className: "cb-row-hint", children: platformNote }) }) })
+        platformNote && /* @__PURE__ */ jsx6("div", { className: "cb-row", children: /* @__PURE__ */ jsx6("div", { className: "cb-row-main", children: /* @__PURE__ */ jsx6("div", { className: "cb-row-hint", children: platformNote }) }) })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs5("div", { className: "cb-card", children: [
-      /* @__PURE__ */ jsx5("div", { className: "cb-card-head", children: /* @__PURE__ */ jsx5("span", { className: "cb-card-title", children: "\u64CD\u4F5C" }) }),
-      /* @__PURE__ */ jsx5("div", { className: "cb-card-desc", children: "\u4E09\u4E2A\u5165\u53E3\u80FD\u529B\u4E0D\u540C\uFF0C\u6309\u9700\u6C42\u9009\u62E9\u3002" }),
-      /* @__PURE__ */ jsx5("div", { className: "cb-card-body", children: /* @__PURE__ */ jsxs5("div", { className: "actions", children: [
-        /* @__PURE__ */ jsxs5("button", { className: "cb-action cb-action-primary", onClick: () => setView("transfer"), children: [
-          /* @__PURE__ */ jsx5("span", { className: "cb-action-title", children: "\u8DE8\u7AEF\u8F6C\u6362" }),
-          /* @__PURE__ */ jsx5("span", { className: "cb-action-desc", children: "\u4EFB\u610F\u4E24\u7AEF\u4E92\u8F6C\uFF08\u542B Zcode / Claude Code \u2192 DSH\uFF09\uFF0C\u652F\u6301\u4E0A\u4E0B\u6587\u9884\u89C8\u4E0E\u538B\u7F29" })
+    /* @__PURE__ */ jsxs6("div", { className: "cb-card", children: [
+      /* @__PURE__ */ jsx6("div", { className: "cb-card-head", children: /* @__PURE__ */ jsx6("span", { className: "cb-card-title", children: "\u64CD\u4F5C" }) }),
+      /* @__PURE__ */ jsx6("div", { className: "cb-card-desc", children: "\u4E09\u4E2A\u5165\u53E3\u80FD\u529B\u4E0D\u540C\uFF0C\u6309\u9700\u6C42\u9009\u62E9\u3002" }),
+      /* @__PURE__ */ jsx6("div", { className: "cb-card-body", children: /* @__PURE__ */ jsxs6("div", { className: "actions", children: [
+        /* @__PURE__ */ jsxs6("button", { className: "cb-action cb-action-primary", onClick: () => setView("transfer"), children: [
+          /* @__PURE__ */ jsx6("span", { className: "cb-action-title", children: "\u8DE8\u7AEF\u8F6C\u6362" }),
+          /* @__PURE__ */ jsx6("span", { className: "cb-action-desc", children: "\u4EFB\u610F\u4E24\u7AEF\u4E92\u8F6C\uFF08\u542B Zcode / Claude Code \u2192 DSH\uFF09\uFF0C\u652F\u6301\u4E0A\u4E0B\u6587\u9884\u89C8\u4E0E\u538B\u7F29" })
         ] }),
-        /* @__PURE__ */ jsxs5("button", { className: "cb-action", onClick: () => setView("import"), children: [
-          /* @__PURE__ */ jsx5("span", { className: "cb-action-title", children: "\u5BFC\u5165 Codex \u2192 DSH" }),
-          /* @__PURE__ */ jsx5("span", { className: "cb-action-desc", children: "\u5E26\u5DE5\u4F5C\u533A\u9009\u62E9\u3001\u53BB\u91CD\u3001\u52A0\u5BC6\u5185\u5BB9\u5360\u4F4D" })
+        /* @__PURE__ */ jsxs6("button", { className: "cb-action", onClick: () => setView("import"), children: [
+          /* @__PURE__ */ jsx6("span", { className: "cb-action-title", children: "\u5BFC\u5165 Codex \u2192 DSH" }),
+          /* @__PURE__ */ jsx6("span", { className: "cb-action-desc", children: "\u5E26\u5DE5\u4F5C\u533A\u9009\u62E9\u3001\u53BB\u91CD\u3001\u52A0\u5BC6\u5185\u5BB9\u5360\u4F4D" })
         ] }),
-        /* @__PURE__ */ jsxs5("button", { className: "cb-action", onClick: () => setView("export"), children: [
-          /* @__PURE__ */ jsx5("span", { className: "cb-action-title", children: "\u5BFC\u51FA DSH \u2192 Codex / WorkBuddy" }),
-          /* @__PURE__ */ jsx5("span", { className: "cb-action-desc", children: "\u81EA\u52A8\u5907\u4EFD\u65E7\u6587\u4EF6\u3001\u6CE8\u518C Codex \u7D22\u5F15" })
+        /* @__PURE__ */ jsxs6("button", { className: "cb-action", onClick: () => setView("export"), children: [
+          /* @__PURE__ */ jsx6("span", { className: "cb-action-title", children: "\u5BFC\u51FA DSH \u2192 Codex / WorkBuddy" }),
+          /* @__PURE__ */ jsx6("span", { className: "cb-action-desc", children: "\u81EA\u52A8\u5907\u4EFD\u65E7\u6587\u4EF6\u3001\u6CE8\u518C Codex \u7D22\u5F15" })
         ] })
       ] }) })
     ] }),
-    status && /* @__PURE__ */ jsxs5("div", { className: "cb-card", children: [
-      /* @__PURE__ */ jsx5("div", { className: "cb-card-head", children: /* @__PURE__ */ jsx5("span", { className: "cb-card-title", children: "\u5B58\u50A8\u4F4D\u7F6E" }) }),
-      /* @__PURE__ */ jsx5("div", { className: "cb-card-body", children: /* @__PURE__ */ jsxs5("dl", { className: "paths", children: [
-        /* @__PURE__ */ jsx5("dt", { children: "Codex \u76EE\u5F55" }),
-        /* @__PURE__ */ jsx5("dd", { children: status.codexDir }),
-        /* @__PURE__ */ jsx5("dt", { children: "DSH \u4F1A\u8BDD\u76EE\u5F55" }),
-        /* @__PURE__ */ jsx5("dd", { children: status.dshSessionsRoot })
+    status && /* @__PURE__ */ jsxs6("div", { className: "cb-card", children: [
+      /* @__PURE__ */ jsx6("div", { className: "cb-card-head", children: /* @__PURE__ */ jsx6("span", { className: "cb-card-title", children: "\u5B58\u50A8\u4F4D\u7F6E" }) }),
+      /* @__PURE__ */ jsx6("div", { className: "cb-card-body", children: /* @__PURE__ */ jsxs6("dl", { className: "paths", children: [
+        /* @__PURE__ */ jsx6("dt", { children: "Codex \u76EE\u5F55" }),
+        /* @__PURE__ */ jsx6("dd", { children: status.codexDir }),
+        /* @__PURE__ */ jsx6("dt", { children: "DSH \u4F1A\u8BDD\u76EE\u5F55" }),
+        /* @__PURE__ */ jsx6("dd", { children: status.dshSessionsRoot })
       ] }) })
     ] }),
-    /* @__PURE__ */ jsx5(LogPanel, { apiBase })
+    /* @__PURE__ */ jsx6(LogPanel, { apiBase })
   ] });
 }
 
@@ -1890,7 +2026,7 @@ function apply(ctx) {
   }
 }
 function PluginSettingsSection(props) {
-  return React6.createElement("section", { className: "plugin-settings-section" }, props.children);
+  return React7.createElement("section", { className: "plugin-settings-section" }, props.children);
 }
 
 

@@ -9,6 +9,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatBytes } from '../shared/errors';
+import { BudgetPicker, DEFAULT_BUDGET_VALUE, type BudgetValue } from './BudgetPicker';
 
 type Phase = 'loading' | 'pick' | 'confirm' | 'exporting' | 'done' | 'error';
 
@@ -46,6 +47,10 @@ export function ExportDialog({ apiBase, onBack }: Props) {
   const [registerState, setRegisterState] = useState<'idle' | 'done'>('idle');
   const [registerResult, setRegisterResult] = useState<any>(null);
   const [registerError, setRegisterError] = useState<string | null>(null);
+  /** 导出的上下文长度（按模型 / 自定义 token） */
+  const [budgetValue, setBudgetValue] = useState<BudgetValue>(DEFAULT_BUDGET_VALUE);
+  /** 是否启用上下文裁剪（默认关闭，完整导出） */
+  const [trimContext, setTrimContext] = useState(false);
 
   const doRegister = useCallback(async () => {
     setRegistering(true);
@@ -102,9 +107,17 @@ export function ExportDialog({ apiBase, onBack }: Props) {
     setError(null);
     try {
       const endpoint = target === 'workbuddy' ? '/export-workbuddy' : '/export';
-      const body = target === 'workbuddy'
+      const body: Record<string, unknown> = target === 'workbuddy'
         ? { sessionIds: [...checked] }
         : { sessionIds: [...checked], doBackup: true };
+
+      // ★ 上下文裁剪（可选）：启用时传 model / budget，后端会按预算压缩
+      if (trimContext) {
+        if (budgetValue.mode === 'custom') body.budget = budgetValue.custom;
+        else if (budgetValue.model) body.model = budgetValue.model;
+        body.trimContext = true;
+      }
+
       const r = await fetch(`${apiBase}${endpoint}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -239,6 +252,32 @@ export function ExportDialog({ apiBase, onBack }: Props) {
             </ul>
           )}
         </div>
+
+        {/* ★ 上下文长度（可选裁剪） */}
+        <div className="cb-card">
+          <div className="cb-card-head">
+            <span className="cb-card-title">上下文长度</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 400 }}>
+              <input
+                type="checkbox"
+                checked={trimContext}
+                onChange={(e) => setTrimContext(e.target.checked)}
+              />
+              启用裁剪
+            </label>
+          </div>
+          <div className="cb-card-desc">
+            {trimContext
+              ? '会按所选预算压缩会话内容（技术细节优先保留），超出部分折叠为摘要。'
+              : '默认完整导出（不裁剪）。目标模型上下文有限时可启用裁剪。'}
+          </div>
+          {trimContext && (
+            <div className="cb-card-body">
+              <BudgetPicker value={budgetValue} onChange={setBudgetValue} />
+            </div>
+          )}
+        </div>
+
         <div className="dialog-footer">
           <div />
           <div>

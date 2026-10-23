@@ -18,7 +18,7 @@
  *   P0 保护：代码块、命令、路径、错误、参数、版本号 —— 逐字保留，绝不摘要。
  */
 import type { UirSession, UirBlock, UirTurn, UirStep } from '../uir/types.js';
-import { estimateTokens, effectiveBudget } from './tokens.js';
+import { estimateTokens, resolveBudget, type BudgetResolution } from './tokens.js';
 import { analyzeText, isInjectedTemplate } from '../uir/helpers.js';
 
 // ───────────────────────── 保护片段提取 ─────────────────────────
@@ -106,8 +106,10 @@ export function extractProtected(text: string): ProtectedPiece[] {
 // ───────────────────────── 压缩结果 ─────────────────────────
 
 export interface SummarizeOptions {
-  /** token 预算（默认 200k，硬上限 200k） */
+  /** token 预算（显式指定，优先级最高） */
   budget?: number;
+  /** 模型名（用于自动查上下文长度，如 'claude-sonnet-4-5' → 200k） */
+  model?: string;
   /** 保真度：full 尽量不压 / balanced 默认 / compact 更激进 */
   fidelity?: 'full' | 'balanced' | 'compact';
   /** 关注点（提升匹配内容的保留优先级，如 ['报错','API 参数']） */
@@ -144,15 +146,20 @@ export interface SummarizeResult {
   /** 结构化大纲（机器可读） */
   outline: Array<{ turn: number; intent: string; files: string[]; tools: string[] }>;
   stats: SummarizeStats;
+  /** 预算解析结果（含来源与模型预设） */
+  budget: BudgetResolution;
 }
 
 // ───────────────────────── 主流程 ─────────────────────────
 
 /**
  * 把 UIR 会话压缩成不超过预算的上下文文本。
+ *
+ * 预算来源优先级：opts.budget > opts.model 预设 > 默认 200k
  */
 export function summarizeSession(session: UirSession, opts: SummarizeOptions = {}): SummarizeResult {
-  const budget = effectiveBudget(opts.budget);
+  const budgetInfo = resolveBudget({ budget: opts.budget, model: opts.model });
+  const budget = budgetInfo.effective;
   const fidelity = opts.fidelity ?? 'balanced';
 
   const stats: SummarizeStats = {
@@ -178,6 +185,7 @@ export function summarizeSession(session: UirSession, opts: SummarizeOptions = {
       context: originalText + '\n\n（无对话内容）',
       outline: [],
       stats,
+      budget: budgetInfo,
     };
   }
 
@@ -189,6 +197,7 @@ export function summarizeSession(session: UirSession, opts: SummarizeOptions = {
       context: originalText,
       outline: buildOutline(session),
       stats,
+      budget: budgetInfo,
     };
   }
 
@@ -201,7 +210,7 @@ export function summarizeSession(session: UirSession, opts: SummarizeOptions = {
     stats.level = 'L1';
     stats.summarized = true;
     finishRatio(stats);
-    return { context: l1Text, outline: buildOutline(l1), stats };
+    return { context: l1Text, outline: buildOutline(l1), stats, budget: budgetInfo };
   }
 
   // L2 + L3：按轮次从新到旧分配预算
@@ -210,7 +219,7 @@ export function summarizeSession(session: UirSession, opts: SummarizeOptions = {
   stats.level = level;
   stats.summarized = true;
   finishRatio(stats);
-  return { context, outline: buildOutline(session), stats };
+  return { context, outline: buildOutline(session), stats, budget: budgetInfo };
 }
 
 function finishRatio(stats: SummarizeStats): void {

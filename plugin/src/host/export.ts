@@ -12,6 +12,7 @@ import type { ExportReport } from '../shared/types.js';
 import { BridgeError, describeError } from '../shared/errors.js';
 import { readDshSessionFile, listDshSessions } from '../convert/dsh-store.js';
 import { dshToCodex } from '../convert/dsh2codex.js';
+import { summarizeSession } from '../budget/summarize.js';
 import { defaultCodexSessionsDir, defaultDshSessionsRoot, backupDir, exportDir } from './paths.js';
 import { logOp } from './oplog.js';
 import { writeWorkbuddySession, workbuddyAvailable } from './wb-store.js';
@@ -124,6 +125,9 @@ export interface ExportOneResult {
 /**
  * 导出单个 DSH 会话。
  * @param doBackup 是否备份 Codex 目录旧 JSONL（默认 true）
+ * @param trimContext 是否按上下文预算裁剪（默认 false = 完整导出）
+ * @param budget 显式 token 预算（trimContext=true 时有效）
+ * @param model 模型名（trimContext=true 且未指定 budget 时用于查上下文长度）
  */
 export async function exportOne(
   sessionId: string,
@@ -131,6 +135,9 @@ export async function exportOne(
     dshSessionsRoot?: string;
     codexSessionsDir?: string;
     doBackup?: boolean;
+    trimContext?: boolean;
+    budget?: number;
+    model?: string;
   } = {},
 ): Promise<ExportOneResult> {
   const dshRoot = opts.dshSessionsRoot ?? defaultDshSessionsRoot();
@@ -185,9 +192,25 @@ export async function exportOne(
   let report: ExportReport;
   try {
     const session = readDshSessionFile(row.filePath);
-    const r = dshToCodex({ header: session.header, events: session.events });
+
+    // ★ 可选：按上下文预算裁剪（先转 UIR → 压缩 → 再转回 DSH 事件）
+    let events = session.events;
+    let trimWarning: string | undefined;
+    if (opts.trimContext) {
+      try {
+        const uir = await dshToUirForTrim(session);
+        const sum = summarizeSession(uir, { budget: opts.budget, model: opts.model });
+        events = uirToDshEvents(uir, sum, session.header);
+        trimWarning = `已按上下文预算裁剪：原始 ${sum.stats.originalTokens.toLocaleString()} → ${sum.stats.returnedTokens.toLocaleString()} tokens（${sum.stats.level}）`;
+      } catch (e) {
+        trimWarning = `上下文裁剪失败，已按完整内容导出：${String((e as Error)?.message ?? e)}`;
+      }
+    }
+
+    const r = dshToCodex({ header: session.header, events });
     jsonl = r.jsonl;
     report = r.report;
+    if (trimWarning) report.warnings.push(trimWarning);
   } catch (e) {
     const msg = String((e as Error)?.message ?? e);
     report = {
@@ -229,7 +252,14 @@ export async function exportOne(
 /** 批量导出 */
 export async function exportMany(
   sessionIds: string[],
-  opts: { dshSessionsRoot?: string; codexSessionsDir?: string; doBackup?: boolean } = {},
+  opts: {
+    dshSessionsRoot?: string;
+    codexSessionsDir?: string;
+    doBackup?: boolean;
+    trimContext?: boolean;
+    budget?: number;
+    model?: string;
+  } = {},
 ): Promise<{
   results: ExportOneResult[];
   ok: number;
@@ -347,4 +377,114 @@ export async function exportManyToWorkbuddy(
   }
   const ok = results.filter((r) => r.ok).length;
   return { results, ok, failed: results.length - ok };
+}
+
+// ───────────────────── 上下文裁剪辅助 ─────────────────────
+
+/**
+ * 把 DSH 会话转成 UIR（用于裁剪）。
+ *
+ * 这里只做「够用」的转换：保留 turn/step/message/tool 结构，
+ * 不追求完整保真（裁剪后本来就要重新生成内容）。
+ */
+async function dshToUirForTrim(session: { header: any; events: any[] }): Promise<any> {
+  const { DshAdapter } = await import('../adapters/dsh/adapter.js');
+  const adapter = new DshAdapter();
+  const r = await adapter.read({ sessionId: session.header.id });
+  return r.session;
+}
+
+/**
+ * 把裁剪后的 UIR 转回 DSH 事件数组。
+ *
+ * 只输出 turn/step/message/tool 等核心事件，标题与模型选择一并带上。
+ */
+function uirToDshEvents(uir: any, sum: any, header: any): any[] {
+  const events: any[] = [];
+  let seq = 0;
+  const push = (type: string, data: Record<string, unknown>, time: number, extra: Record<string, unknown> = {}) => {
+    events.push({ type, seq: seq++, time, data, ...extra });
+  };
+
+  for (const turn of uir.turns) {
+    const t = turn.index + 1;
+    push('turn/start', { turn: t }, turn.startedAt);
+    push('step/start', { turn: t, step: 1 }, turn.startedAt);
+
+    for (const b of turn.userMessages) {
+      if (b.kind !== 'text') continue;
+      push('user/message', {
+        role: 'user', id: `u-${seq}`,
+        content: [{ type: 'text', text: b.text }],
+      }, turn.startedAt, { surfaceOp: 'append' });
+    }
+
+    for (const step of turn.steps) {
+      const content: any[] = [];
+      if (step.reasoning) content.push({ type: 'reasoning', text: step.reasoning });
+      for (const b of step.blocks) {
+        if (b.kind === 'text' && b.role === 'assistant') content.push({ type: 'text', text: b.text });
+        else if (b.kind === 'tool-call') {
+          content.push({ type: 'tool-call', id: b.callId, name: b.name, arguments: b.rawArgs ?? JSON.stringify(b.args ?? {}) });
+        }
+      }
+      if (content.length > 0) {
+        push('assistant/message', {
+          turn: t, step: 1,
+          message: {
+            role: 'assistant', id: `a-${seq}`, content,
+            source: { kind: 'model', provider: 'dsh-bridge', model: uir.model?.id ?? 'trimmed', imported: true },
+          },
+          stream: [],
+        }, turn.endedAt ?? turn.startedAt, { surfaceOp: 'append' });
+
+        for (const b of step.blocks) {
+          if (b.kind === 'tool-call') {
+            push('tool/call', {
+              turn: t, step: 1,
+              callId: b.callId, name: b.name,
+              arguments: b.rawArgs ?? JSON.stringify(b.args ?? {}),
+            }, turn.endedAt ?? turn.startedAt);
+          }
+        }
+      }
+      for (const b of step.blocks) {
+        if (b.kind !== 'tool-result') continue;
+        push('tool/result', {
+          turn: t, step: 1,
+          message: {
+            role: 'tool', id: `tr-${seq}`,
+            toolCallId: b.callId,
+            source: { kind: 'tool', callId: b.callId },
+            content: [{ type: 'text', text: b.output.text }],
+            isError: b.isError,
+          },
+        }, turn.endedAt ?? turn.startedAt, { surfaceOp: 'append' });
+      }
+    }
+
+    push('step/end', { turn: t, step: 1 }, turn.endedAt ?? turn.startedAt);
+    push('turn/end', { turn: t, reason: { kind: 'completed' } }, turn.endedAt ?? turn.startedAt);
+  }
+
+  // 标题（source.kind==='user' 时 messageSeqs 必须为空）
+  push('session/title', {
+    title: (uir.title || '导入会话').slice(0, 200),
+    messageSeqs: [],
+    source: { kind: 'user' },
+  }, header.createdAt);
+
+  if (uir.model?.id) {
+    push('model/selection', { provider: uir.model.provider ?? 'dsh-bridge', model: uir.model.id }, header.createdAt);
+  }
+
+  // 裁剪标记（便于追溯）
+  push('codex-bridge/trim', {
+    originalTokens: sum.stats.originalTokens,
+    returnedTokens: sum.stats.returnedTokens,
+    level: sum.stats.level,
+    compressionRatio: sum.stats.compressionRatio,
+  }, Date.now());
+
+  return events;
 }

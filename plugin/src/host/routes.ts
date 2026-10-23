@@ -203,6 +203,9 @@ export function mountRoutes(router: {
         dshSessionsRoot: body.dshSessionsRoot,
         codexSessionsDir: body.codexSessionsDir,
         doBackup: body.doBackup !== false,
+        trimContext: body.trimContext === true,
+        budget: body.budget != null ? Number(body.budget) : undefined,
+        model: body.model ? String(body.model) : undefined,
       });
       json(res, 200, {
         ok: true, succ: r.ok, failed: r.failed,
